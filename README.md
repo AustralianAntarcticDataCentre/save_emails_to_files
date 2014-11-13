@@ -21,6 +21,8 @@ These tables are used to serve out voyage tracks and data in GeoServer.
 
 - [How to understand the equal sign '=' symbol in IMAP email text?](http://stackoverflow.com/questions/15621510/how-to-understand-the-equal-sign-symbol-in-imap-email-text)
 
+  Decode the MIME symbols in the email content (fixes soft line breaks).
+
 - [INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](http://tools.ietf.org/html/rfc2060.html)
 
 - [INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4](http://tools.ietf.org/html/rfc1730.html)
