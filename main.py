@@ -2,6 +2,7 @@
 Populate voyage data tables from CSV emails.
 """
 
+from datetime import datetime
 import email
 import logging
 
@@ -38,15 +39,15 @@ class VoyageEmailParser(CSVEmailParser):
 			Column names and their values.
 		"""
 
-		raw_time = row['Date/Time']
 		#print(sorted(row.keys()))
 
-		print(raw_time)
-		# parsedate_tz() includes the timezone.
-		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate
-		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate_tz
-		#sent_time = email.utils.parsedate_tz(date)
-		#sent_time = email.utils.parsedate(date)
+		row_time_str = row['Date/Time']
+		row_time = datetime.strptime(row_time_str, '%Y-%m-%d %H:%M')
+
+		latitude = float(row['LATITUDE'])
+		longitude = float(row['LONGITUDE'])
+
+		print(latitude)
 		raise Exception('Stop here')
 
 
@@ -63,6 +64,13 @@ def main():
 	for email_message in loop_email_messages(mail):
 		#for header_name, header_value in email_message.items():
 
+		# parsedate_tz() includes the timezone.
+		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate
+		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate_tz
+		#sent_time = email.utils.parsedate_tz(date)
+		#sent_time = email.utils.parsedate(date)
+
+
 		# parseaddr() splits "From" into name and address.
 		# https://docs.python.org/3.4/library/email.util.html#email.utils.parseaddr
 		email_from = email.utils.parseaddr(email_message['From'])[1]
@@ -71,6 +79,7 @@ def main():
 		if email_from != EMAIL_FROM:
 			logger.debug('Email is not from the correct sender (%s).', email_from)
 			continue
+
 
 		subject = email_message['Subject']
 		logger.debug('Email subject is "%s".', subject)
