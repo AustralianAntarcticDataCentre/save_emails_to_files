@@ -2,29 +2,52 @@
 Populate voyage data tables from CSV emails.
 """
 
-import csv
 import email
-from io import StringIO
 import logging
-import quopri
 
 from imap import (
 	connect_to_server, EmailCheckError, login_to_account, loop_email_messages
 )
+from message import CSVEmailParser
 from settings import (
-	EMAIL_FROM, EMAIL_SUBJECT_PREFIX, IMAP_PASSWORD, IMAP_SERVER, IMAP_USERNAME
+	EMAIL_FROM, EMAIL_SUBJECT_RE, IMAP_PASSWORD, IMAP_SERVER, IMAP_USERNAME
 )
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_email_content(message):
-	if not message.is_multipart():
-		return message.get_payload()
+class VoyageEmailParser(CSVEmailParser):
 
-	parts = [get_email_content(payload) for payload in message.get_payload()]
-	return ''.join(parts)
+	required_columns = ('Date/Time', 'LATITUDE', 'LONGITUDE')
+
+
+	#def process_csv_content(self, content):
+		# TODO: Save this content to a CSV file as backup.
+		#self.process_csv_rows(StringIO(content))
+
+
+	def process_csv_row(self, row):
+		"""
+		Process a single row of CSV from a voyage email.
+
+		Parameters
+		----------
+
+		row : dict
+			Column names and their values.
+		"""
+
+		raw_time = row['Date/Time']
+		#print(sorted(row.keys()))
+
+		print(raw_time)
+		# parsedate_tz() includes the timezone.
+		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate
+		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate_tz
+		#sent_time = email.utils.parsedate_tz(date)
+		#sent_time = email.utils.parsedate(date)
+		raise Exception('Stop here')
 
 
 def main():
@@ -46,36 +69,28 @@ def main():
 
 		# Skip this message if it did not come from the correct sender.
 		if email_from != EMAIL_FROM:
+			logger.debug('Email is not from the correct sender (%s).', email_from)
 			continue
 
 		subject = email_message['Subject']
+		logger.debug('Email subject is "%s".', subject)
 
-		# Skip this message if the subject does not have the correct prefix.
-		if not subject.startswith(EMAIL_SUBJECT_PREFIX):
+		match_data = EMAIL_SUBJECT_RE.match(subject)
+
+		# Skip this message if the subject does not match the format.
+		if match_data is None:
+			logger.debug('Email subject does not match the required format.')
 			continue
 
-		# parsedate_tz() includes the timezone.
-		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate
-		# https://docs.python.org/3.4/library/email.util.html#email.utils.parsedate_tz
-		#sent_time = email.utils.parsedate_tz(date)
-		#sent_time = email.utils.parsedate(date)
+		# Get a dict of the values matched in the regex.
+		match_dict = match_data.groupdict()
 
-		# TODO: Should check the subject structure is correct.
-		subject_parts = subject.split()
-		setcode = subject_parts[2]
+		parser = VoyageEmailParser()
 
-		raw_content = get_email_content(email_message)
-		content_bytes = quopri.decodestring(raw_content, False)
-		content = content_bytes.decode('utf-8')
+		# Create the table name from the regex values.
+		parser.table_name = 'V{season_code}{voyage_code}'.format(**match_dict)
 
-		# TODO: Save this content to a CSV file as backup.
-
-		with StringIO(content) as f:
-			reader = csv.DictReader(f)
-			for row in reader:
-				print(row)
-				break
-
+		parser.process_message(email_message)
 		break
 
 
