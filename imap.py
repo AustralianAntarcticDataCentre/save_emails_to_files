@@ -69,7 +69,6 @@ class EmailServer:
 
 		logger.info('Found %s items in the inbox.', mail_count)
 
-
 	def get_uid_list(self):
 		"""
 		Return the message UID list.
@@ -109,7 +108,6 @@ class EmailServer:
 
 		return uid_list
 
-
 	def get_email_message(self, uid):
 		logger.debug('Start get_email_message(%s).', uid)
 
@@ -127,7 +125,6 @@ class EmailServer:
 
 		#return email.message_from_string(raw_email_str)
 		return email.message_from_bytes(raw_email_bytes)
-
 
 	def loop_email_messages(self):
 		"""
