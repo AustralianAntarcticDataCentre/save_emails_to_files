@@ -19,14 +19,24 @@ class EmailCheckError(Exception):
 class EmailServer:
 
 	def __init__(self, server, username, password):
-		self.mail = IMAP4_SSL(server)
+		self.password = password
+		self.server = server
+		self.username = username
 
-		logger.debug('Attempting to login as "%s".', username)
+	def __enter__(self):
+		self.mail = IMAP4_SSL(self.server)
 
-		self.mail.login(username, password)
+		logger.debug('Attempting to login as "%s".', self.username)
 
-		logger.debug('Login as "%s" worked.', username)
+		self.mail.login(self.username, self.password)
 
+		logger.debug('Login as "%s" worked.', self.username)
+
+		return self
+
+	def __exit__(self, type, value, traceback):
+		#self.mail.close()
+		pass
 
 	def select_inbox(self):
 		"""
