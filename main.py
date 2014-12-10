@@ -6,12 +6,11 @@ from datetime import datetime
 import email
 import logging
 
-from imap import EmailCheckError, EmailServer
 from message import CSVEmailParser
-from oracle import DatabaseServer
 from settings import (
-	DATABASE_STRING, EMAIL_FROM, EMAIL_SUBJECT_RE, IMAP_PASSWORD, IMAP_SERVER,
-	IMAP_USERNAME, TABLE_NAME_FORMAT
+	DATABASE_STRING, DatabaseServer, EMAIL_FROM, EMAIL_SUBJECT_RE,
+	EmailCheckError, EmailServer, IMAP_PASSWORD, IMAP_SERVER, IMAP_USERNAME,
+	TABLE_NAME_FORMAT
 )
 
 
