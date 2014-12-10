@@ -1,5 +1,9 @@
 """
 Process emails containing CSV data.
+
+The CSVEmailParser class requires the implementor to provide it with
+email messages.
+It does not contain any code for accessing email accounts.
 """
 
 import csv
@@ -20,11 +24,23 @@ class CSVEmailParser:
 		"""
 		Process CSV in an email.
 
+		Uses `self.get_message_content()` to get the raw mail content.
+
+		Calls `self.process_csv_content()` with the decoded mail content as the
+		last step in this method.
+
+
 		Parameters
 		----------
 
 		message : email.message.Message
 			https://docs.python.org/3.4/library/email.message.html#email.message.Message
+
+
+		Returns
+		-------
+
+		None
 		"""
 
 		raw_content = self.get_message_content(message)
@@ -40,14 +56,16 @@ class CSVEmailParser:
 		"""
 		Get message content from an email.
 
-		Uses `is_multipart()` and `get_payload()` to recursively call this function,
-		and build the message content from the parts.
+		Uses `is_multipart()` and `get_payload()` to recursively call this
+		function and build the message content from the parts.
+
 
 		Parameters
 		----------
 
 		message : email.message.Message
 			https://docs.python.org/3.4/library/email.message.html#email.message.Message
+
 
 		Returns
 		-------
@@ -63,22 +81,31 @@ class CSVEmailParser:
 			self.get_message_content(payload)
 			for payload in message.get_payload()
 		]
+
 		return ''.join(parts)
 
 
 	def process_csv_content(self, content):
 		"""
-		Process CSV in a string.
+		Process CSV from a string.
 
 		Having this intermediate step between processing the entire CSV file
 		and then each of the rows allows another action to happen.
 
 		This may be saving the content to a file as a backup.
 
+
 		Parameters
 		----------
 
 		content : str
+			Decoded mail content text containing only CSV.
+
+
+		Returns
+		-------
+
+		None
 		"""
 
 		self.process_csv_file(StringIO(content))
@@ -88,10 +115,26 @@ class CSVEmailParser:
 		"""
 		Process CSV in a file.
 
+		Creates a `csv.DictReader` from the file and loops over rows contained
+		within it.
+
+		Uses `self.check_row_is_valid()` on each row, which throws an exception
+		if it fails.
+
+		Calls `self.process_csv_row()` if the row is valid.
+
+
 		Parameters
 		----------
 
 		content_file : file object
+			This could be `open(file_name)` or `StringIO(text)`.
+
+
+		Returns
+		-------
+
+		None
 		"""
 
 		with content_file as f:
@@ -109,17 +152,25 @@ class CSVEmailParser:
 
 		Column names are case-sensitive.
 
+
 		Parameters
 		----------
 
 		row : dict
 			Column names and their values.
 
+
 		Raises
 		------
 
 		KeyError
 			If a required column is missing.
+
+
+		Returns
+		-------
+
+		None
 		"""
 
 		if self.required_columns is not None:
@@ -135,11 +186,18 @@ class CSVEmailParser:
 
 		This method should be replaced in a subclass to do something useful.
 
+
 		Parameters
 		----------
 
 		row : dict
 			Column names and their values.
+
+
+		Returns
+		-------
+
+		None
 		"""
 
 		pass
