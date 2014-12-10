@@ -11,7 +11,7 @@ from message import CSVEmailParser
 from oracle import DatabaseServer
 from settings import (
 	DATABASE_STRING, EMAIL_FROM, EMAIL_SUBJECT_RE, IMAP_PASSWORD, IMAP_SERVER,
-	IMAP_USERNAME
+	IMAP_USERNAME, TABLE_NAME_FORMAT
 )
 
 
@@ -100,7 +100,7 @@ def main():
 				#sent_time = email.utils.parsedate_tz(date)
 
 				# Create the table name from the regex values.
-				table_name = 'V{season_code}{voyage_code}'.format(**match_dict)
+				table_name = TABLE_NAME_FORMAT.format(**match_dict)
 
 				#parser = VoyageEmailParser(database, table_name)
 
