@@ -10,8 +10,10 @@ from imap import (
 	connect_to_server, EmailCheckError, login_to_account, loop_email_messages
 )
 from message import CSVEmailParser
+from oracle import connect as db_connect
 from settings import (
-	EMAIL_FROM, EMAIL_SUBJECT_RE, IMAP_PASSWORD, IMAP_SERVER, IMAP_USERNAME
+	DATABASE_STRING, EMAIL_FROM, EMAIL_SUBJECT_RE, IMAP_PASSWORD, IMAP_SERVER,
+	IMAP_USERNAME
 )
 
 
@@ -22,11 +24,14 @@ class VoyageEmailParser(CSVEmailParser):
 
 	required_columns = ('Date/Time', 'LATITUDE', 'LONGITUDE')
 
-
 	#def process_csv_content(self, content):
 		# TODO: Save this content to a CSV file as backup.
-		#self.process_csv_rows(StringIO(content))
+		#file_name = ?
+		#with open(file_name, 'w') as f:
+			#f.write(content)
 
+		#self.process_csv_rows(StringIO(content))
+		#CSVEmailParser.process_csv_content(self, StringIO(content))
 
 	def process_csv_row(self, row):
 		"""
@@ -47,8 +52,17 @@ class VoyageEmailParser(CSVEmailParser):
 		latitude = float(row['LATITUDE'])
 		longitude = float(row['LONGITUDE'])
 
+		# TODO: Remove this test code.
 		print(latitude)
 		raise Exception('Stop here')
+
+
+class VoyageIMAP:
+	pass
+
+
+#class VoyageOracle(OracleDatabase):
+	#pass
 
 
 def main():
@@ -70,16 +84,14 @@ def main():
 		#sent_time = email.utils.parsedate_tz(date)
 		#sent_time = email.utils.parsedate(date)
 
-
 		# parseaddr() splits "From" into name and address.
 		# https://docs.python.org/3.4/library/email.util.html#email.utils.parseaddr
 		email_from = email.utils.parseaddr(email_message['From'])[1]
 
 		# Skip this message if it did not come from the correct sender.
 		if email_from != EMAIL_FROM:
-			logger.debug('Email is not from the correct sender (%s).', email_from)
+			logger.warning('Email is not from the correct sender (%s).', email_from)
 			continue
-
 
 		subject = email_message['Subject']
 		logger.debug('Email subject is "%s".', subject)
@@ -96,18 +108,22 @@ def main():
 
 		parser = VoyageEmailParser()
 
-		# Create the table name from the regex values.
-		parser.table_name = 'V{season_code}{voyage_code}'.format(**match_dict)
+		#with db_connect(DATABASE_STRING) as db:
+		if True:
+			# Create the table name from the regex values.
+			parser.table_name = 'V{season_code}{voyage_code}'.format(**match_dict)
 
-		parser.process_message(email_message)
-		break
+			#db.create_table(parser.table_name)
+
+			parser.process_message(email_message)
+			break
 
 
 if '__main__' == __name__:
 	logging.basicConfig(level=logging.DEBUG)
 
-	logger.info('Started.')
+	logger.info('Started reading emails.')
 
 	main()
 
-	logger.info('Complete.')
+	logger.info('Finished reading emails.')
