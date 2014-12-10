@@ -143,8 +143,6 @@ class EmailServer:
 			If the UID list request fails.
 		"""
 
-		logger.debug('Attempting to get the UID list.')
-
 		try:
 			uid_list = self.get_uid_list()
 		except EmailCheckError as e:
