@@ -6,9 +6,7 @@ from datetime import datetime
 import email
 import logging
 
-from imap import (
-	connect_to_server, EmailCheckError, login_to_account, loop_email_messages
-)
+from imap import EmailCheckError, EmailServer
 from message import CSVEmailParser
 from oracle import connect as db_connect
 from settings import (
@@ -37,6 +35,7 @@ class VoyageEmailParser(CSVEmailParser):
 		"""
 		Process a single row of CSV from a voyage email.
 
+
 		Parameters
 		----------
 
@@ -57,25 +56,15 @@ class VoyageEmailParser(CSVEmailParser):
 		raise Exception('Stop here')
 
 
-class VoyageIMAP:
-	pass
-
-
-#class VoyageOracle(OracleDatabase):
-	#pass
-
-
 def main():
-	# Would be nicer if `with IMAP4_SSL() as mail:` was possible.
-	mail = connect_to_server(IMAP_SERVER)
-
 	try:
-		login_to_account(mail, IMAP_USERNAME, IMAP_PASSWORD)
+		server = EmailServer(IMAP_SERVER, IMAP_USERNAME, IMAP_PASSWORD)
+		server.select_inbox()
 	except EmailCheckError as e:
 		logger.error(e.args[0])
 		raise e
 
-	for email_message in loop_email_messages(mail):
+	for email_message in server.loop_email_messages():
 		#for header_name, header_value in email_message.items():
 
 		# parsedate_tz() includes the timezone.
@@ -94,6 +83,7 @@ def main():
 			continue
 
 		subject = email_message['Subject']
+
 		logger.debug('Email subject is "%s".', subject)
 
 		match_data = EMAIL_SUBJECT_RE.match(subject)
