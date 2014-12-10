@@ -21,29 +21,68 @@ def connect_to_server(server):
 
 
 def login_to_account(mail, username, password):
-	logger.debug('Start login_to_account(%s).', username)
+	logger.debug('Attempting to login as "%s".', username)
 
 	mail.login(username, password)
-	logger.info('Login as "%s" worked.', username)
+
+	logger.debug('Login as "%s" worked.', username)
 
 
 def select_inbox(mail):
-	logger.debug('Start select_inbox().')
+	"""
+	Access the inbox.
+
+
+	Raises
+	------
+
+	EmailCheckError
+		If the inbox cannot be accessed or the message count fails.
+
+
+	Returns
+	-------
+
+	None
+	"""
+
+	logger.debug('Attempting to access the inbox.')
 
 	ok, mail_count_list = mail.select('INBOX')
 	if ok != OK:
-		raise EmailCheckError('Failed checking inbox.')
+		raise EmailCheckError('Failed selecting the inbox.')
 
 	try:
 		mail_count = int(mail_count_list[0])
 	except ValueError as e:
-		raise EmailCheckError('Mail count conversion failed.') from e
+		raise EmailCheckError('Failed to get the message count.') from e
 
 	logger.info('Found %s items in the inbox.', mail_count)
 
 
 def get_uid_list(mail):
-	logger.debug('Start get_uid_list().')
+	"""
+	Return the message UID list.
+
+	Each UID can be used to access the correct message, even if the mailbox
+	changes after this call.
+
+
+	Raises
+	------
+
+	EmailCheckError
+		If the UID list request fails or the list cannot be split into values.
+
+
+	Returns
+	-------
+
+	list
+		List of UID integers.
+	"""
+
+	logger.debug('Attempting to get the message UID list.')
 
 	select_inbox(mail)
 
@@ -71,14 +110,32 @@ def get_email_message(mail, uid):
 	# data[0][1] is a string containing the email headers and body.
 
 	logger.debug('Convert email from bytes.')
+
 	raw_email_bytes = data[0][1]
 	#raw_email_str = raw_email_bytes.decode('utf-8')
+
 	#return email.message_from_string(raw_email_str)
 	return email.message_from_bytes(raw_email_bytes)
 
 
 def loop_email_messages(mail):
-	logger.debug('Start loop_email_messages().')
+	"""
+	Generate email messages from the current mailbox.
+
+	Yields the message from `get_email_message()` for each UID.
+
+	>>> for message in loop_email_messages(mail):
+	...     print(message)
+
+
+	Raises
+	------
+
+	EmailCheckError
+		If the UID list request fails.
+	"""
+
+	logger.debug('Attempting to get the UID list.')
 
 	try:
 		uid_list = get_uid_list(mail)
@@ -86,5 +143,9 @@ def loop_email_messages(mail):
 		logger.error(e.args[0])
 		raise e
 
+	logger.debug('Start looping UID list.')
+
 	for uid in uid_list:
 		yield get_email_message(mail, uid)
+
+	logger.debug('Finished looping UID list.')
