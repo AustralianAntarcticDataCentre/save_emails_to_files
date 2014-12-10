@@ -16,136 +16,137 @@ class EmailCheckError(Exception):
 	pass
 
 
-def connect_to_server(server):
-	return IMAP4_SSL(server)
+class EmailServer:
+
+	def __init__(self, server, username, password):
+		self.mail = IMAP4_SSL(server)
+
+		logger.debug('Attempting to login as "%s".', username)
+
+		self.mail.login(username, password)
+
+		logger.debug('Login as "%s" worked.', username)
 
 
-def login_to_account(mail, username, password):
-	logger.debug('Attempting to login as "%s".', username)
-
-	mail.login(username, password)
-
-	logger.debug('Login as "%s" worked.', username)
+	def select_inbox(self):
+		"""
+		Access the inbox.
 
 
-def select_inbox(mail):
-	"""
-	Access the inbox.
+		Raises
+		------
+
+		EmailCheckError
+			If the inbox cannot be accessed or the message count fails.
 
 
-	Raises
-	------
+		Returns
+		-------
 
-	EmailCheckError
-		If the inbox cannot be accessed or the message count fails.
+		None
+		"""
 
+		logger.debug('Attempting to access the inbox.')
 
-	Returns
-	-------
+		ok, mail_count_list = self.mail.select('INBOX')
+		if ok != OK:
+			raise EmailCheckError('Failed selecting the inbox.')
 
-	None
-	"""
+		try:
+			mail_count = int(mail_count_list[0])
+		except ValueError as e:
+			raise EmailCheckError('Failed to get the message count.') from e
 
-	logger.debug('Attempting to access the inbox.')
-
-	ok, mail_count_list = mail.select('INBOX')
-	if ok != OK:
-		raise EmailCheckError('Failed selecting the inbox.')
-
-	try:
-		mail_count = int(mail_count_list[0])
-	except ValueError as e:
-		raise EmailCheckError('Failed to get the message count.') from e
-
-	logger.info('Found %s items in the inbox.', mail_count)
+		logger.info('Found %s items in the inbox.', mail_count)
 
 
-def get_uid_list(mail):
-	"""
-	Return the message UID list.
+	def get_uid_list(self):
+		"""
+		Return the message UID list.
 
-	Each UID can be used to access the correct message, even if the mailbox
-	changes after this call.
-
-
-	Raises
-	------
-
-	EmailCheckError
-		If the UID list request fails or the list cannot be split into values.
+		Each UID can be used to access the correct message, even if the mailbox
+		changes after this call.
 
 
-	Returns
-	-------
+		Raises
+		------
 
-	list
-		List of UID integers.
-	"""
-
-	logger.debug('Attempting to get the message UID list.')
-
-	select_inbox(mail)
-
-	#ok, data = mail.search(None, 'ALL')
-	ok, raw_uid_list = mail.uid('search', None, 'ALL')
-	if ok != OK:
-		raise EmailCheckError('Failed searching mail.')
-
-	try:
-		uid_list = raw_uid_list[0].split()
-	except ValueError as e:
-		raise EmailCheckError('Mail count conversion failed.') from e
-
-	return uid_list
+		EmailCheckError
+			If the UID list request fails or the list cannot be split into
+			values.
 
 
-def get_email_message(mail, uid):
-	logger.debug('Start get_email_message(%s).', uid)
+		Returns
+		-------
 
-	ok, data = mail.uid('fetch', uid, '(RFC822)')
-	if ok != OK:
-		raise EmailCheckError('Failed fetching message.')
+		list
+			List of UID integers.
+		"""
 
-	# data[0][0] == '1 (RFC822 {25644}'
-	# data[0][1] is a string containing the email headers and body.
+		logger.debug('Attempting to get the message UID list.')
 
-	logger.debug('Convert email from bytes.')
+		self.select_inbox()
 
-	raw_email_bytes = data[0][1]
-	#raw_email_str = raw_email_bytes.decode('utf-8')
+		#ok, data = mail.search(None, 'ALL')
+		ok, raw_uid_list = self.mail.uid('search', None, 'ALL')
+		if ok != OK:
+			raise EmailCheckError('Failed searching mail.')
 
-	#return email.message_from_string(raw_email_str)
-	return email.message_from_bytes(raw_email_bytes)
+		try:
+			uid_list = raw_uid_list[0].split()
+		except ValueError as e:
+			raise EmailCheckError('Mail count conversion failed.') from e
 
-
-def loop_email_messages(mail):
-	"""
-	Generate email messages from the current mailbox.
-
-	Yields the message from `get_email_message()` for each UID.
-
-	>>> for message in loop_email_messages(mail):
-	...     print(message)
+		return uid_list
 
 
-	Raises
-	------
+	def get_email_message(self, uid):
+		logger.debug('Start get_email_message(%s).', uid)
 
-	EmailCheckError
-		If the UID list request fails.
-	"""
+		ok, data = self.mail.uid('fetch', uid, '(RFC822)')
+		if ok != OK:
+			raise EmailCheckError('Failed fetching message.')
 
-	logger.debug('Attempting to get the UID list.')
+		# data[0][0] == '1 (RFC822 {25644}'
+		# data[0][1] is a string containing the email headers and body.
 
-	try:
-		uid_list = get_uid_list(mail)
-	except EmailCheckError as e:
-		logger.error(e.args[0])
-		raise e
+		logger.debug('Convert email from bytes.')
 
-	logger.debug('Start looping UID list.')
+		raw_email_bytes = data[0][1]
+		#raw_email_str = raw_email_bytes.decode('utf-8')
 
-	for uid in uid_list:
-		yield get_email_message(mail, uid)
+		#return email.message_from_string(raw_email_str)
+		return email.message_from_bytes(raw_email_bytes)
 
-	logger.debug('Finished looping UID list.')
+
+	def loop_email_messages(self):
+		"""
+		Generate email messages from the current mailbox.
+
+		Yields the message from `get_email_message()` for each UID.
+
+		>>> for message in loop_email_messages(mail):
+		...     print(message)
+
+
+		Raises
+		------
+
+		EmailCheckError
+			If the UID list request fails.
+		"""
+
+		logger.debug('Attempting to get the UID list.')
+
+		try:
+			uid_list = self.get_uid_list()
+		except EmailCheckError as e:
+			logger.error(e.args[0])
+			raise e
+
+		logger.debug('Start looping UID list.')
+
+		for uid in uid_list:
+			yield self.get_email_message(uid)
+
+		logger.debug('Finished looping UID list.')
