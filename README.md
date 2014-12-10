@@ -7,6 +7,20 @@ Populate the voyage data tables with a row for each email.
 The tables are used to serve out voyage tracks and data in GeoServer.
 
 
+## Usage
+
+	python main.py
+
+- Connects to the IMAP server.
+
+- Loops over emails in the inbox.
+  Checks if the sender and subject are correct.
+
+- Create the table, if necessary.
+
+- Add the email data as a row in the table.
+
+
 ## Helpful articles and documentation
 
 - [19.1. email - An email and MIME handling package](https://docs.python.org/3.4/library/email.html)
