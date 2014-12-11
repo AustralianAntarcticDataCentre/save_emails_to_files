@@ -8,9 +8,8 @@ import logging
 
 from message import CSVEmailParser
 from settings import (
-	CSV_FOLDER, DATABASE_STRING, DatabaseServer, EMAIL_FROM, EMAIL_SUBJECT_RE,
-	EmailCheckError, EmailServer, IMAP_PASSWORD, IMAP_SERVER, IMAP_USERNAME,
-	TABLE_NAME_FORMAT
+	CSV_FOLDER, EMAIL_FROM, EMAIL_SUBJECT_RE, get_database_client,
+	get_email_client, TABLE_NAME_FORMAT
 )
 
 
@@ -59,11 +58,11 @@ class VoyageEmailParser(CSVEmailParser):
 
 
 def main():
-	with DatabaseServer(DATABASE_STRING) as database:
-		with EmailServer(IMAP_SERVER, IMAP_USERNAME, IMAP_PASSWORD) as server:
-			server.select_inbox()
+	with get_database_client() as database:
+		with get_email_client() as email_client:
+			email_client.select_inbox()
 
-			for email_message in server.loop_email_messages():
+			for email_message in email_client.loop_email_messages():
 				# parseaddr() splits "From" into name and address.
 				# https://docs.python.org/3/library/email.util.html#email.utils.parseaddr
 				email_from = email.utils.parseaddr(email_message['From'])[1]
