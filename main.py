@@ -93,13 +93,13 @@ def main():
 				# Create the table name from the regex values.
 				table_name = TABLE_NAME_FORMAT.format(**match_dict)
 
-				#parser = VoyageEmailParser(database, table_name)
+				# Make sure the required table already exists.
+				if not database.table_exists(table_name):
+					logger.warning('Table "%s" does not exist.', table_name)
+					continue
 
-				#parser.process_message(email_message)
-				break
-		#except EmailCheckError as e:
-			#logger.error(e.args[0])
-			#raise e
+				parser = VoyageEmailParser(database, table_name)
+				parser.process_message(email_message)
 
 
 if '__main__' == __name__:
