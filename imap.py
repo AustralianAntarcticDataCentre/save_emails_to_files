@@ -109,7 +109,7 @@ class EmailServer:
 		return uid_list
 
 	def get_email_message(self, uid):
-		logger.debug('Start get_email_message(%s).', uid)
+		logger.debug('Get email message with UID %s.', uid)
 
 		ok, data = self.mail.uid('fetch', uid, '(RFC822)')
 		if ok != OK:
