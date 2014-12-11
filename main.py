@@ -60,8 +60,7 @@ class VoyageEmailParser(CSVEmailParser):
 
 
 def main():
-	#with DatabaseServer(DATABASE_STRING) as database:
-	if True:
+	with DatabaseServer(DATABASE_STRING) as database:
 		with EmailServer(IMAP_SERVER, IMAP_USERNAME, IMAP_PASSWORD) as server:
 			server.select_inbox()
 
