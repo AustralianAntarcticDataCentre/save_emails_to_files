@@ -54,8 +54,6 @@ class VoyageEmailParser(CSVEmailParser):
 		latitude = float(row['LATITUDE'])
 		longitude = float(row['LONGITUDE'])
 
-		#self.database.create_table(self.table_name)
-
 		# TODO: Remove this test code.
 		print(latitude)
 		raise Exception('Stop here')
