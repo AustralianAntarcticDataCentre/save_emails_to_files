@@ -8,7 +8,7 @@ import logging
 
 from message import CSVEmailParser
 from settings import (
-	DATABASE_STRING, DatabaseServer, EMAIL_FROM, EMAIL_SUBJECT_RE,
+	CSV_FOLDER, DATABASE_STRING, DatabaseServer, EMAIL_FROM, EMAIL_SUBJECT_RE,
 	EmailCheckError, EmailServer, IMAP_PASSWORD, IMAP_SERVER, IMAP_USERNAME,
 	TABLE_NAME_FORMAT
 )
@@ -25,14 +25,13 @@ class VoyageEmailParser(CSVEmailParser):
 		self.database = database
 		self.table_name = table_name
 
-	#def process_csv_content(self, content):
-		# TODO: Save this content to a CSV file as backup.
-		#file_name = ?
-		#with open(file_name, 'w') as f:
-			#f.write(content)
+	def process_csv_content(self, content):
+		# TODO: Get proper name for CSV files.
+		file_name = os.path.join(CSV_FOLDER, 'data.csv')
+		with open(file_name, 'w') as f:
+			f.write(content)
 
-		#self.process_csv_rows(StringIO(content))
-		#CSVEmailParser.process_csv_content(self, content)
+		CSVEmailParser.process_csv_content(self, content)
 
 	def process_csv_row(self, row):
 		"""
