@@ -6,7 +6,7 @@ from datetime import datetime
 import email
 import logging
 
-from message import CSVEmailParser
+from csv_email import CSVEmailParser
 from settings import (
 	CSV_FOLDER, EMAIL_FROM, EMAIL_SUBJECT_RE, get_database_client,
 	get_email_client, TABLE_NAME_FORMAT
