@@ -90,11 +90,6 @@ def main():
 				# Get a dict of the values matched in the regex.
 				match_dict = match_data.groupdict()
 
-				# parsedate_tz() includes the timezone.
-				# https://docs.python.org/3/library/email.util.html#email.utils.parsedate
-				# https://docs.python.org/3/library/email.util.html#email.utils.parsedate_tz
-				#sent_time = email.utils.parsedate_tz(date)
-
 				# Create the table name from the regex values.
 				table_name = TABLE_NAME_FORMAT.format(**match_dict)
 
