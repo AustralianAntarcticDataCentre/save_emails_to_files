@@ -21,9 +21,9 @@ class VoyageEmailParser(CSVEmailParser):
 
 	required_columns = ('Date/Time', 'LATITUDE', 'LONGITUDE')
 
-	#def __init__(self, database, table_name):
-		#self.database = database
-		#self.table_name = table_name
+	def __init__(self, database, table_name):
+		self.database = database
+		self.table_name = table_name
 
 	#def process_csv_content(self, content):
 		# TODO: Save this content to a CSV file as backup.
