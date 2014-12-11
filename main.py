@@ -76,7 +76,7 @@ def main():
 
 				# Skip this message if it did not come from the correct sender.
 				if email_from != EMAIL_FROM:
-					logger.warning('Email is not from the correct sender (%s).', email_from)
+					logger.warning('Email is not from the correct sender (%s).', EMAIL_FROM)
 					continue
 
 				subject = email_message['Subject']
