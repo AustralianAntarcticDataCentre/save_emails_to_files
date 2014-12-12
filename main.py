@@ -5,6 +5,7 @@ Populate voyage data tables from CSV emails.
 from datetime import datetime
 import email
 import logging
+import os
 
 from csv_email import CSVEmailParser
 from settings import (
