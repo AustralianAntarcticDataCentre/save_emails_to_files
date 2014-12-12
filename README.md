@@ -1,4 +1,4 @@
-# Voyage data downloads
+# Process voyage data emails
 
 Read CSV from emails that are retrieved with IMAP.
 
