@@ -20,6 +20,15 @@ EMAIL_SUBJECT_RE = re.compile(''.join([
 	r'\.csv',
 ]))
 
+LOGGING_FORMAT = '''
+- file: %(pathname)s
+  level: %(levelname)s
+  line: %(lineno)s
+  message: |
+    %(message)s
+  time: %(asctime)s
+'''.strip()
+
 TABLE_NAME_FORMAT = 'data_{year}{month}'
 
 
