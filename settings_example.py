@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 
@@ -33,6 +34,8 @@ LOGGING_FORMAT = '''
     %(message)s
   time: %(asctime)s
 '''.strip()
+
+LOGGING_LEVEL = logging.DEBUG
 
 # Values come from `EMAIL_SUBJECT_RE`.
 TABLE_NAME_FORMAT = 'data_{year}{month}'
