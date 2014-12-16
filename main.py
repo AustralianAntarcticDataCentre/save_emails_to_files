@@ -57,14 +57,22 @@ class VoyageEmailParser(CSVEmailParser):
 
 		#print(sorted(row.keys()))
 
+		#try:
 		row_time_str = row['Date/Time']
-		row_time = datetime.strptime(row_time_str, '%Y-%m-%d %H:%M')
+		#except KeyError as e:
 
+		#try:
+		row_time = datetime.strptime(row_time_str, '%Y-%m-%d %H:%M')
+		#except ValueError as e:
+
+		#try:
 		latitude = float(row['LATITUDE'])
 		longitude = float(row['LONGITUDE'])
+		#except KeyError as e:
+		#except ValueError as e:
 
 		# TODO: Remove this test code.
-		print(latitude)
+		print(row_time_str)
 		raise Exception('Stop here')
 
 
