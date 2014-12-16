@@ -5,6 +5,8 @@ from imap import EmailCheckError, EmailServer
 from postgresql import DatabaseServer
 
 
+# If this is set to a valid path, all CSV files extracted from emails will be
+# stored in sub-folders within it.
 CSV_FOLDER = os.getcwd()
 
 # Values come from `EMAIL_SUBJECT_RE`.
