@@ -115,7 +115,7 @@ def main():
 					logger.warning('Table "%s" does not exist.', table_name)
 					continue
 
-				parser = VoyageEmailParser(database, table_name)
+				parser = VoyageEmailParser(database, table_name, match_dict)
 				parser.process_message(email_message)
 
 
