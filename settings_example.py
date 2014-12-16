@@ -7,6 +7,8 @@ from postgresql import DatabaseServer
 
 CSV_FOLDER = os.getcwd()
 
+CSV_NAME_FORMAT = '{year}-{month}-{day}T{hour}{minute}.csv'
+
 # Restrict emails by sender.
 EMAIL_FROM = 'sender@example.com'
 
