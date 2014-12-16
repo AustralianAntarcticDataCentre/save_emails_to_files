@@ -7,6 +7,7 @@ from postgresql import DatabaseServer
 
 CSV_FOLDER = os.getcwd()
 
+# Values come from `EMAIL_SUBJECT_RE`.
 CSV_NAME_FORMAT = '{year}-{month}-{day}T{hour}{minute}.csv'
 
 # Restrict emails by sender.
@@ -31,6 +32,7 @@ LOGGING_FORMAT = '''
   time: %(asctime)s
 '''.strip()
 
+# Values come from `EMAIL_SUBJECT_RE`.
 TABLE_NAME_FORMAT = 'data_{year}{month}'
 
 
