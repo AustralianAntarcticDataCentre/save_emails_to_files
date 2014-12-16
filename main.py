@@ -9,8 +9,8 @@ import os
 
 from csv_email import CSVEmailParser
 from settings import (
-	CSV_FOLDER, EMAIL_FROM, EMAIL_SUBJECT_RE, get_database_client,
-	get_email_client, LOGGING_FORMAT, TABLE_NAME_FORMAT
+	CSV_FOLDER, CSV_NAME_FORMAT, EMAIL_FROM, EMAIL_SUBJECT_RE,
+	get_database_client, get_email_client, LOGGING_FORMAT, TABLE_NAME_FORMAT
 )
 
 
@@ -21,16 +21,26 @@ class VoyageEmailParser(CSVEmailParser):
 
 	required_columns = ('Date/Time', 'LATITUDE', 'LONGITUDE')
 
-	def __init__(self, database, table_name):
+	def __init__(self, database, table_name, subject_values):
 		self.database = database
+		self.subject_values = subject_values
 		self.table_name = table_name
 
 	def process_csv_content(self, content):
-		# TODO: Get proper name for CSV files.
-		file_name = os.path.join(CSV_FOLDER, 'data.csv')
+		"""
+		Save the CSV to a file and continue processing it.
+		"""
+
+		# Create the file name from the subject parts.
+		file_name = CSV_NAME_FORMAT.format(**self.subject_values)
+
+		file_path = os.path.join(CSV_FOLDER, file_name)
+
+		# Write the contents of the CSV to the file.
 		with open(file_name, 'w') as f:
 			f.write(content)
 
+		# Continue processing the message.
 		CSVEmailParser.process_csv_content(self, content)
 
 	def process_csv_row(self, row):
