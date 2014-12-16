@@ -5,7 +5,7 @@ Oracle database connector.
 Links
 -----
 
-- http://cx-oracle.readthedocs.org/en/latest/cursor.html
+- https://cx-oracle.readthedocs.org/en/latest/
 """
 
 import logging
