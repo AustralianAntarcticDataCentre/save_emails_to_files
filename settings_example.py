@@ -19,6 +19,13 @@ from imap import EmailCheckError, EmailServer
 from postgresql import DatabaseServer
 
 
+CSV_COLUMNS = dict(
+	date_time='time',
+	date_time_format='%Y-%m-%dT%H:%M:%SZ',
+	latitude='latitude',
+	longitude='longitude'
+)
+
 # If this is set to a valid path, all CSV files extracted from emails will be
 # stored in sub-folders within it.
 CSV_FOLDER = os.getcwd()

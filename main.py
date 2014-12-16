@@ -9,7 +9,7 @@ import os
 
 from csv_email import CSVEmailParser
 from settings import (
-	CSV_FOLDER, CSV_NAME_FORMAT, EMAIL_FROM, EMAIL_SUBJECT_RE,
+	CSV_COLUMNS, CSV_FOLDER, CSV_NAME_FORMAT, EMAIL_FROM, EMAIL_SUBJECT_RE,
 	get_database_client, get_email_client, LOGGING_FORMAT, LOGGING_LEVEL,
 	TABLE_NAME_FORMAT
 )
@@ -59,16 +59,17 @@ class VoyageEmailParser(CSVEmailParser):
 		#print(sorted(row.keys()))
 
 		#try:
-		row_time_str = row['Date/Time']
+		row_time_str = row.pop(CSV_COLUMNS['date_time'])
 		#except KeyError as e:
 
 		#try:
-		row_time = datetime.strptime(row_time_str, '%Y-%m-%d %H:%M')
+		date_time_format = row.pop(CSV_COLUMNS['date_time_format'])
+		row_time = datetime.strptime(row_time_str, date_time_format)
 		#except ValueError as e:
 
 		#try:
-		latitude = float(row['LATITUDE'])
-		longitude = float(row['LONGITUDE'])
+		latitude = float(row.pop(CSV_COLUMNS['latitude']))
+		longitude = float(row.pop(CSV_COLUMNS['longitude']))
 		#except KeyError as e:
 		#except ValueError as e:
 
