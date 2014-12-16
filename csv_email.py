@@ -35,12 +35,6 @@ class CSVEmailParser:
 
 		message : email.message.Message
 			https://docs.python.org/3.4/library/email.message.html#email.message.Message
-
-
-		Returns
-		-------
-
-		None
 		"""
 
 		raw_content = self.get_message_content(message)
@@ -100,12 +94,6 @@ class CSVEmailParser:
 
 		content : str
 			Decoded mail content text containing only CSV.
-
-
-		Returns
-		-------
-
-		None
 		"""
 
 		self.process_csv_file(StringIO(content))
@@ -129,12 +117,6 @@ class CSVEmailParser:
 
 		content_file : file object
 			This could be `open(file_name)` or `StringIO(text)`.
-
-
-		Returns
-		-------
-
-		None
 		"""
 
 		with content_file as f:
@@ -165,12 +147,6 @@ class CSVEmailParser:
 
 		KeyError
 			If a required column is missing.
-
-
-		Returns
-		-------
-
-		None
 		"""
 
 		if self.required_columns is not None:
@@ -192,12 +168,6 @@ class CSVEmailParser:
 
 		row : dict
 			Column names and their values.
-
-
-		Returns
-		-------
-
-		None
 		"""
 
 		pass

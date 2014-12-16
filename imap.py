@@ -48,12 +48,6 @@ class EmailServer:
 
 		EmailCheckError
 			If the inbox cannot be accessed or the message count fails.
-
-
-		Returns
-		-------
-
-		None
 		"""
 
 		logger.debug('Attempting to access the inbox.')
