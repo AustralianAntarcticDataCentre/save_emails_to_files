@@ -10,7 +10,8 @@ import os
 from csv_email import CSVEmailParser
 from settings import (
 	CSV_FOLDER, CSV_NAME_FORMAT, EMAIL_FROM, EMAIL_SUBJECT_RE,
-	get_database_client, get_email_client, LOGGING_FORMAT, TABLE_NAME_FORMAT
+	get_database_client, get_email_client, LOGGING_FORMAT, LOGGING_LEVEL,
+	TABLE_NAME_FORMAT
 )
 
 
@@ -120,7 +121,7 @@ def main():
 
 
 if '__main__' == __name__:
-	logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG)
+	logging.basicConfig(format=LOGGING_FORMAT, level=LOGGING_LEVEL)
 
 	logger.info('Started reading emails.')
 
