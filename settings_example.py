@@ -15,36 +15,23 @@ import logging
 import os
 import re
 
+import yaml
+
 from imap import EmailCheckError, EmailServer
 from postgresql import DatabaseServer
 
 
-CSV_COLUMNS = dict(
-	date_time='time',
-	date_time_format='%Y-%m-%dT%H:%M:%SZ',
-	latitude='latitude',
-	longitude='longitude'
-)
+SETTINGS_YAML_PATH = os.path.join(os.getcwd(), 'settings.yaml')
+
+CSV = None
+
+with open(SETTINGS_YAML_PATH) as r:
+	# TODO: Loop CSV check types and create regexes for each.
+	CSV = yaml.load(r)
 
 # If this is set to a valid path, all CSV files extracted from emails will be
 # stored in sub-folders within it.
 CSV_FOLDER = os.getcwd()
-
-# Values come from `EMAIL_SUBJECT_RE`.
-CSV_NAME_FORMAT = '{year}-{month}-{day}T{hour}{minute}.csv'
-
-# Restrict emails by sender.
-EMAIL_FROM = 'sender@example.com'
-
-# Restrict emails by subject.
-EMAIL_SUBJECT_RE = re.compile(''.join([
-	r'(?P<year>\d{4})',
-	r'(?P<month>\d{2})',
-	r'(?P<day>\d{2})',
-	r'(?P<hour>\d{2})',
-	r'(?P<minute>\d{2})',
-	r'\.csv',
-]))
 
 LOGGING_FORMAT = '''
 - file: %(pathname)s
@@ -56,9 +43,6 @@ LOGGING_FORMAT = '''
 '''.strip()
 
 LOGGING_LEVEL = logging.DEBUG
-
-# Values come from `EMAIL_SUBJECT_RE`.
-TABLE_NAME_FORMAT = 'data_{year}{month}'
 
 
 def get_database_client():

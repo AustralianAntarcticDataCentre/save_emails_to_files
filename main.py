@@ -6,12 +6,12 @@ from datetime import datetime
 import email
 import logging
 import os
+import re
 
 from csv_email import CSVEmailParser
 from settings import (
-	CSV_COLUMNS, CSV_FOLDER, CSV_NAME_FORMAT, EMAIL_FROM, EMAIL_SUBJECT_RE,
-	get_database_client, get_email_client, LOGGING_FORMAT, LOGGING_LEVEL,
-	TABLE_NAME_FORMAT
+	CSV, CSV_FOLDER, get_database_client, get_email_client, LOGGING_FORMAT,
+	LOGGING_LEVEL
 )
 
 
@@ -20,9 +20,8 @@ logger = logging.getLogger(__name__)
 
 class VoyageEmailParser(CSVEmailParser):
 
-	required_columns = ('Date/Time', 'LATITUDE', 'LONGITUDE')
-
-	def __init__(self, database, table_name, subject_values):
+	def __init__(self, database, csv, table_name, subject_values):
+		self.csv = csv
 		self.database = database
 		self.subject_values = subject_values
 		self.table_name = table_name
@@ -32,8 +31,10 @@ class VoyageEmailParser(CSVEmailParser):
 		Save the CSV to a file and continue processing it.
 		"""
 
+		file_name_format = self.csv['save_csv']['file_name_format'].strip()
+
 		# Create the file name from the subject parts.
-		file_name = CSV_NAME_FORMAT.format(**self.subject_values)
+		file_name = file_name_format.format(**self.subject_values)
 
 		file_path = os.path.join(CSV_FOLDER, file_name)
 
@@ -59,26 +60,33 @@ class VoyageEmailParser(CSVEmailParser):
 		#print(sorted(row.keys()))
 
 		#try:
-		row_time_str = row.pop(CSV_COLUMNS['date_time'])
+		date_time_details = self.csv['load_csv']['date_time']
+		row_time_str = row.pop(date_time_details['column'])
+		row_time_format = row.pop(date_time_details['format'])
 		#except KeyError as e:
 
 		#try:
-		date_time_format = row.pop(CSV_COLUMNS['date_time_format'])
-		row_time = datetime.strptime(row_time_str, date_time_format)
+		row_time = datetime.strptime(row_time_str, row_time_format)
 		#except ValueError as e:
 
 		#try:
-		latitude = float(row.pop(CSV_COLUMNS['latitude']))
-		longitude = float(row.pop(CSV_COLUMNS['longitude']))
+		latitude_name = self.csv['load_csv']['latitude']['column']
+		latitude = float(row.pop(latitude_name))
+
+		longitude_name = self.csv['load_csv']['longitude']['column']
+		longitude = float(row.pop(longitude_name))
 		#except KeyError as e:
 		#except ValueError as e:
 
 		# TODO: Remove this test code.
-		print(row_time_str)
+		print(row_time)
 		raise Exception('Stop here')
 
 
 def main():
+	if CSV is None:
+		return False
+
 	with get_database_client() as database:
 		with get_email_client() as email_client:
 			email_client.select_inbox()
@@ -90,39 +98,57 @@ def main():
 
 				logger.debug('Email is from "%s".', email_from)
 
-				# Skip this message if it did not come from the correct sender.
-				if email_from != EMAIL_FROM:
-					logger.warning('Email is not from the correct sender (%s).', EMAIL_FROM)
-					continue
-
 				subject = email_message['Subject']
 
 				logger.debug('Email subject is "%s".', subject)
 
-				match_data = EMAIL_SUBJECT_RE.match(subject)
+				for CSV_TYPE in CSV:
+					check = CSV_TYPE['check']
 
-				# Skip this message if the subject does not match the format.
-				if match_data is None:
-					logger.warning('Email subject does not match the required format.')
-					continue
+					required_from = check['from']
 
-				# Get a dict of the values matched in the regex.
-				match_dict = match_data.groupdict()
+					# Skip this message if it did not come from the correct sender.
+					if email_from != required_from:
+						msg = 'Email is not from the correct sender (%s).'
+						logger.warning(msg, required_from)
+						continue
 
-				# Create the table name from the regex values.
-				table_name = TABLE_NAME_FORMAT.format(**match_dict)
+					subject_regex_list = check['subject_regex']
+					subject_regex = re.compile(''.join(subject_regex_list))
 
-				# Make sure the required table already exists.
-				if not database.table_exists(table_name):
-					logger.warning('Table "%s" does not exist.', table_name)
-					continue
+					match_data = subject_regex.match(subject)
 
-				parser = VoyageEmailParser(database, table_name, match_dict)
-				parser.process_message(email_message)
+					# Skip this message if the subject does not match the format.
+					if match_data is None:
+						logger.warning('Email subject does not match the required format.')
+						continue
+
+					# Get a dict of the values matched in the regex.
+					match_dict = match_data.groupdict()
+
+					save_table = CSV_TYPE['save_table']
+					table_name_format = save_table['file_name_format'].strip()
+
+					# Create the table name from the regex values.
+					table_name = table_name_format.format(**match_dict)
+
+					# Make sure the required table already exists.
+					if not database.table_exists(table_name):
+						logger.warning('Table "%s" does not exist.', table_name)
+						continue
+
+					parser = VoyageEmailParser(database, CSV_TYPE, table_name,
+						match_dict
+					)
+					parser.process_message(email_message)
+
+	return True
 
 
 if '__main__' == __name__:
 	logging.basicConfig(format=LOGGING_FORMAT, level=LOGGING_LEVEL)
+
+	# TODO: Compile each `CSV[i]['check']['subject_regex']`.
 
 	logger.info('Started reading emails.')
 
