@@ -10,8 +10,8 @@ import re
 
 from csv_email import CSVEmailParser
 from settings import (
-	CSV, CSV_FOLDER, get_database_client, get_email_client, LOGGING_FORMAT,
-	LOGGING_LEVEL
+	CSV_FOLDER, get_csv_file_types, get_database_client, get_email_client,
+	LOGGING_FORMAT, LOGGING_LEVEL
 )
 
 
@@ -84,7 +84,9 @@ class VoyageEmailParser(CSVEmailParser):
 
 
 def main():
-	if CSV is None:
+	csv_file_types = get_csv_file_types()
+
+	if csv_file_types is None:
 		return False
 
 	with get_database_client() as database:
@@ -102,7 +104,7 @@ def main():
 
 				logger.debug('Email subject is "%s".', subject)
 
-				for CSV_TYPE in CSV:
+				for CSV_TYPE in csv_file_types:
 					check = CSV_TYPE['check']
 
 					required_from = check['from']
