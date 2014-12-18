@@ -7,10 +7,6 @@ That file is ignored by the repo, since it will contain environment
 specific and sensitive information (like passwords).
 """
 
-# TODO: Allow separate settings for different subject matches.
-# Email formats and CSV names may change over the years, and this could
-# be detected by subject matches.
-
 import logging
 import os
 import re
