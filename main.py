@@ -179,8 +179,6 @@ def process_emails():
 		logger.error('CSV file types could not be read from `settings.yaml`.')
 		return False
 
-	# TODO: Compile each `csv_file_type['check']['subject_regex']`.
-
 	with get_database_client() as database:
 		with get_email_client() as email_client:
 			email_client.select_inbox()
