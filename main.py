@@ -108,66 +108,75 @@ class VoyageEmailParser(CSVEmailParser):
 		raise Exception('Stop here')
 
 
-def main():
+def process_message(database, message, csv_file_types):
+	# parseaddr() splits "From" into name and address.
+	# https://docs.python.org/3/library/email.util.html#email.utils.parseaddr
+	email_from = email.utils.parseaddr(message['From'])[1]
+
+	logger.debug('Email is from "%s".', email_from)
+
+	subject = message['Subject']
+
+	logger.debug('Email subject is "%s".', subject)
+
+	for csv_type in csv_file_types:
+		check = csv_type['check']
+
+		required_from = check['from']
+
+		# Skip this message if it did not come from the correct sender.
+		if email_from != required_from:
+			msg = 'Email is not from the correct sender (%s).'
+			logger.warning(msg, required_from)
+			continue
+
+		if 'subject_regex_compiled' in check:
+			subject_regex = check['subject_regex_compiled']
+		else:
+			subject_regex_list = check['subject_regex']
+			subject_regex = re.compile(''.join(subject_regex_list))
+			check['subject_regex_compiled'] = subject_regex
+
+		match_data = subject_regex.match(subject)
+
+		# Skip this message if the subject does not match the format.
+		if match_data is None:
+			logger.warning('Email subject does not match the required format.')
+			continue
+
+		# Get a dict of the values matched in the regex.
+		match_dict = match_data.groupdict()
+
+		save_table = csv_type['save_table']
+		table_name_format = save_table['file_name_format'].strip()
+
+		# Create the table name from the regex values.
+		table_name = table_name_format.format(**match_dict)
+
+		# Make sure the required table already exists.
+		if not database.table_exists(table_name):
+			logger.warning('Table "%s" does not exist.', table_name)
+			continue
+
+		parser = VoyageEmailParser(database, csv_type, table_name, match_dict)
+		parser.process_message(message)
+
+
+def process_emails():
 	csv_file_types = get_csv_file_types()
 
 	if csv_file_types is None:
+		logger.error('CSV file types could not be read from `settings.yaml`.')
 		return False
+
+	# TODO: Compile each `csv_file_type['check']['subject_regex']`.
 
 	with get_database_client() as database:
 		with get_email_client() as email_client:
 			email_client.select_inbox()
 
-			for email_message in email_client.loop_email_messages():
-				# parseaddr() splits "From" into name and address.
-				# https://docs.python.org/3/library/email.util.html#email.utils.parseaddr
-				email_from = email.utils.parseaddr(email_message['From'])[1]
-
-				logger.debug('Email is from "%s".', email_from)
-
-				subject = email_message['Subject']
-
-				logger.debug('Email subject is "%s".', subject)
-
-				for CSV_TYPE in csv_file_types:
-					check = CSV_TYPE['check']
-
-					required_from = check['from']
-
-					# Skip this message if it did not come from the correct sender.
-					if email_from != required_from:
-						msg = 'Email is not from the correct sender (%s).'
-						logger.warning(msg, required_from)
-						continue
-
-					subject_regex_list = check['subject_regex']
-					subject_regex = re.compile(''.join(subject_regex_list))
-
-					match_data = subject_regex.match(subject)
-
-					# Skip this message if the subject does not match the format.
-					if match_data is None:
-						logger.warning('Email subject does not match the required format.')
-						continue
-
-					# Get a dict of the values matched in the regex.
-					match_dict = match_data.groupdict()
-
-					save_table = CSV_TYPE['save_table']
-					table_name_format = save_table['file_name_format'].strip()
-
-					# Create the table name from the regex values.
-					table_name = table_name_format.format(**match_dict)
-
-					# Make sure the required table already exists.
-					if not database.table_exists(table_name):
-						logger.warning('Table "%s" does not exist.', table_name)
-						continue
-
-					parser = VoyageEmailParser(database, CSV_TYPE, table_name,
-						match_dict
-					)
-					parser.process_message(email_message)
+			for message in email_client.loop_email_messages():
+				process_message(database, message, csv_file_types)
 
 	return True
 
@@ -175,10 +184,8 @@ def main():
 if '__main__' == __name__:
 	logging.basicConfig(format=LOGGING_FORMAT, level=LOGGING_LEVEL)
 
-	# TODO: Compile each `CSV[i]['check']['subject_regex']`.
-
 	logger.info('Started reading emails.')
 
-	main()
+	process_emails()
 
 	logger.info('Finished reading emails.')
