@@ -82,8 +82,10 @@ class VoyageEmailParser(CSVEmailParser):
 
 		#print(sorted(row.keys()))
 
+		load_csv = self.csv['load_csv']
+
 		#try:
-		date_time_details = self.csv['load_csv']['date_time']
+		date_time_details = load_csv['date_time']
 		row_time_str = row.pop(date_time_details['column'])
 		row_time_format = row.pop(date_time_details['format'])
 		#except KeyError as e:
@@ -93,10 +95,10 @@ class VoyageEmailParser(CSVEmailParser):
 		#except ValueError as e:
 
 		#try:
-		latitude_name = self.csv['load_csv']['latitude']['column']
+		latitude_name = load_csv['latitude']['column']
 		latitude = float(row.pop(latitude_name))
 
-		longitude_name = self.csv['load_csv']['longitude']['column']
+		longitude_name = load_csv['longitude']['column']
 		longitude = float(row.pop(longitude_name))
 		#except KeyError as e:
 		#except ValueError as e:
