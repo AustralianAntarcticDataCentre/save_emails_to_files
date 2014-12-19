@@ -130,16 +130,20 @@ def process_message(database, message, csv_file_types):
 			logger.warning(msg, required_from)
 			continue
 
+		# Use the compiled RegEx if it is available.
 		if 'subject_regex_compiled' in check:
 			subject_regex = check['subject_regex_compiled']
+
+		# Compile and save the RegEx otherwise.
 		else:
 			subject_regex_list = check['subject_regex']
 			subject_regex = re.compile(''.join(subject_regex_list))
 			check['subject_regex_compiled'] = subject_regex
 
+		# Check if the message subject matches the RegEx.
 		match_data = subject_regex.match(subject)
 
-		# Skip this message if the subject does not match the format.
+		# Skip this message if the subject does not match the RegEx.
 		if match_data is None:
 			logger.warning('Email subject does not match the required format.')
 			continue
@@ -160,6 +164,12 @@ def process_message(database, message, csv_file_types):
 
 		parser = VoyageEmailParser(database, csv_type, table_name, match_dict)
 		parser.process_message(message)
+
+		# No need to check other CSV parsers once one is complete.
+		return True
+
+	# Returns False if none of the parsers matched the given email.
+	return False
 
 
 def process_emails():
