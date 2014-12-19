@@ -21,6 +21,29 @@ logger = logging.getLogger(__name__)
 class VoyageEmailParser(CSVEmailParser):
 
 	def __init__(self, database, csv, table_name, subject_values):
+		"""
+		Create a new voyage CSV email parser.
+
+		Each of the parameters passed into this method are stored in the object.
+
+
+		Parameters
+		----------
+
+		database : object
+			Helper class for accessing the database used to store CSV data.
+
+		csv : dict
+			Dictionary used to extract data from the CSV email.
+			The details are specific to the matched email format.
+
+		table_name : str
+			Name of the table in the database to update with CSV rows.
+
+		subject_values : dict
+			Values that were extracted from the email subject.
+		"""
+
 		self.csv = csv
 		self.database = database
 		self.subject_values = subject_values
