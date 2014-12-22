@@ -52,6 +52,13 @@ class VoyageEmailParser(CSVEmailParser):
 	def process_csv_content(self, content):
 		"""
 		Save the CSV to a file and continue processing it.
+
+
+		Parameters
+		----------
+
+		content : str
+			Text from the email, processed from the raw format.
 		"""
 
 		file_name_format = self.csv['save_csv']['file_name_format'].strip()
