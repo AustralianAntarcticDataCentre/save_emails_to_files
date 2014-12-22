@@ -109,6 +109,31 @@ class VoyageEmailParser(CSVEmailParser):
 
 
 def process_message(database, message, csv_file_types):
+	"""
+	Process a message containing CSV voyage data.
+
+
+	Parameters
+	----------
+
+	database : object
+		Helper class for accessing the database used to store CSV data.
+
+	message : email.message.Message
+		Message (hopefully) with CSV content to be processed.
+
+	csv_file_types : list
+		List of dictionaries containing checks and settings for the different
+		types of CSV emails that can be processed.
+
+
+	Returns
+	-------
+
+	bool
+		True if the message was processed, False if no handler could be found.
+	"""
+
 	# parseaddr() splits "From" into name and address.
 	# https://docs.python.org/3/library/email.util.html#email.utils.parseaddr
 	email_from = email.utils.parseaddr(message['From'])[1]
@@ -175,6 +200,20 @@ def process_message(database, message, csv_file_types):
 
 
 def process_emails():
+	"""
+	Main function to import CSV emails into the database.
+
+	Creates a database and email connection then loops all the emails in the
+	inbox.
+
+
+	Returns
+	-------
+
+	bool
+		False if settings cannot be loaded.
+	"""
+
 	csv_file_types = get_csv_file_types()
 
 	if csv_file_types is None:
