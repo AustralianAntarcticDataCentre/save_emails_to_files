@@ -44,10 +44,31 @@ class VoyageEmailParser(CSVEmailParser):
 			Values that were extracted from the email subject.
 		"""
 
-		self.csv = csv
 		self.database = database
 		self.subject_values = subject_values
 		self.table_name = table_name
+
+		self.csv_column_name = {}
+		self.db_field_name = {}
+
+		# Settings to interpret the CSV columns.
+		self.load_csv = csv['load_csv']
+
+		# Settings to save a copy of the CSV.
+		self.save_csv = csv.get('save_csv', {})
+
+		# Save the format the date column uses.
+		self.db_time_format = self.load_csv['date_time']['format']
+
+		for setting_name in ['date_time', 'latitude', 'longitude']:
+			setting = self.load_csv[setting_name]
+			column = setting['column']
+
+			# Save the CSV column name for parsing rows later.
+			self.csv_column_name[setting_name] = column
+
+			# Use the CSV column name if the database field is not specified.
+			self.db_field_name[setting_name] = setting.get('field', column)
 
 	def process_csv_content(self, content):
 		"""
@@ -61,21 +82,22 @@ class VoyageEmailParser(CSVEmailParser):
 			Text from the email, processed from the raw format.
 		"""
 
-		file_name_format = self.csv['save_csv']['file_name_format'].strip()
+		if 'file_name_format' in self.save_csv:
+			file_name_format = self.save_csv['file_name_format'].strip()
 
-		# Create the file name from the subject parts.
-		file_name = file_name_format.format(**self.subject_values)
+			# Create the file name from the subject parts.
+			file_name = file_name_format.format(**self.subject_values)
 
-		file_path = os.path.join(CSV_FOLDER, file_name)
+			file_path = os.path.join(CSV_FOLDER, file_name)
 
-		# Write the contents of the CSV to the file.
-		with open(file_name, 'w') as f:
-			f.write(content)
+			# Write the contents of the CSV to the file.
+			with open(file_name, 'w') as f:
+				f.write(content)
 
 		# Continue processing the message.
 		CSVEmailParser.process_csv_content(self, content)
 
-	def process_csv_row(self, row):
+	def process_csv_row(self, csv_row):
 		"""
 		Process a single row of CSV from a voyage email.
 
@@ -89,30 +111,35 @@ class VoyageEmailParser(CSVEmailParser):
 
 		#print(sorted(row.keys()))
 
-		load_csv = self.csv['load_csv']
+		# Stores the field names and values to be inserted into the database.
+		fields = {}
 
-		#try:
-		date_time_details = load_csv['date_time']
-		row_time_str = row.pop(date_time_details['column'])
-		row_time_format = row.pop(date_time_details['format'])
-		#except KeyError as e:
+		setting_name = 'date_time'
+		csv_name = self.csv_column_name[setting_name]
+		db_name = self.db_field_name[setting_name]
 
-		#try:
-		row_time = datetime.strptime(row_time_str, row_time_format)
-		#except ValueError as e:
+		# Get the raw time value from the CSV row.
+		time_str = csv_row.pop(csv_name)
 
-		#try:
-		latitude_name = load_csv['latitude']['column']
-		latitude = float(row.pop(latitude_name))
+		# Save the time object after converting it using the saved format.
+		fields[field_name] = datetime.strptime(time_str, self.db_time_format)
 
-		longitude_name = load_csv['longitude']['column']
-		longitude = float(row.pop(longitude_name))
-		#except KeyError as e:
-		#except ValueError as e:
+		for setting_name in ['latitude', 'longitude']:
+			csv_name = self.csv_column_name[setting_name]
+			db_name = self.db_field_name[setting_name]
+			fields[db_name] = float(csv_row.pop(csv_name))
 
-		# TODO: Remove this test code.
-		print(row_time)
-		raise Exception('Stop here')
+		# Loop each of the CSV column details.
+		for csv_name, column_details in self.load_csv['columns'].items():
+			if csv_name not in csv_row:
+				continue
+
+			# Use the CSV column name if a database field name is not given.
+			db_name = column_details.get('field', csv_name)
+
+			fields[field_name] = csv_row[csv_name]
+
+		self.database.insert_row(self.table_name, fields)
 
 
 def process_message(database, message, csv_file_types):
