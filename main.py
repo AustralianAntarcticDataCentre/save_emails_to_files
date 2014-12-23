@@ -53,7 +53,7 @@ class VoyageEmailParser(CSVEmailParser):
 		try:
 			save_csv = settings['save_csv']
 
-			file_name_format = save_csv['file_name_format'].strip()
+			file_name_format = save_csv['name_format'].strip()
 
 			# Create the file name from the subject parts.
 			file_name = file_name_format.format(**subject_values)
@@ -68,7 +68,7 @@ class VoyageEmailParser(CSVEmailParser):
 		self.csv_columns = []
 
 		# Loop each of the CSV column settings.
-		for csv_name, details in settings['load_csv']['columns'].items():
+		for csv_name, details in settings['load_csv_columns'].items():
 			# Use the CSV column name if a database field name is not given.
 			field_name = details.get('field', csv_name)
 
@@ -215,7 +215,7 @@ def process_message(database, message, csv_file_types):
 		save_table = csv_type['save_table']
 
 		# Get the table name template.
-		table_name_format = save_table['file_name_format'].strip()
+		table_name_format = save_table['name_format'].strip()
 
 		# Create the table name from the regex values.
 		table_name = table_name_format.format(**match_dict)
@@ -224,7 +224,7 @@ def process_message(database, message, csv_file_types):
 		if not database.table_exists(table_name):
 			logger.info('Table "%s" does not exist.', table_name)
 
-			columns = csv_type['load_csv']['columns']
+			columns = csv_type['load_csv_columns']
 
 			database.create_table(table_name, columns)
 

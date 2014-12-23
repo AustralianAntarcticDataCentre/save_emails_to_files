@@ -8,30 +8,24 @@
       - (?P<minute>\d{2})
       - \.csv
 
-  load_csv:
-    columns:
-      sensor1:
-        type: float
-      sensor2:
-        type: int
-      sensor3:
-        type: text
-
+  load_csv_columns:
     date_time:
-      column: datetime
-      format: >
+      csv_format: >
         %Y-%m-%dT%H:%M:%S
-
+      type: datetime
     latitude:
-      column: latitude
-
+      type: float
     longitude:
-      column: longitude
+      type: float
+    sensor1:
+      type: float
+    sensor2:
+      type: int
 
   save_csv:
-    file_name_format: >
+    name_format: >
       {year}-{month}-{day}T{hour}{minute}.csv
 
   save_table:
-    file_name_format: >
+    name_format: >
       voyage_{year}{month}{day}
