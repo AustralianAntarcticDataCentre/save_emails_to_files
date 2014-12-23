@@ -229,8 +229,9 @@ def process_message(database, message, csv_file_types):
 		if not database.table_exists(table_name):
 			logger.info('Table "%s" does not exist.', table_name)
 
-			load_csv = csv_type['load_csv']
-			column_lookup = database.create_table(table_name, load_csv)
+			columns = csv_type['load_csv']['columns']
+
+			database.create_table(table_name, columns)
 
 		parser = VoyageEmailParser(database, csv_type, table_name, match_dict)
 		parser.process_message(message)
