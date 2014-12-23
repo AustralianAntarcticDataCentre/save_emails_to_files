@@ -218,14 +218,16 @@ def process_message(database, message, csv_file_types):
 		match_dict = match_data.groupdict()
 
 		save_table = csv_type['save_table']
+
+		# Get the table name template.
 		table_name_format = save_table['file_name_format'].strip()
 
 		# Create the table name from the regex values.
 		table_name = table_name_format.format(**match_dict)
 
-		# Make sure the required table already exists.
+		# Create the required table if it does not exist.
 		if not database.table_exists(table_name):
-			logger.warning('Table "%s" does not exist.', table_name)
+			logger.info('Table "%s" does not exist.', table_name)
 
 			load_csv = csv_type['load_csv']
 			column_lookup = database.create_table(table_name, load_csv)
