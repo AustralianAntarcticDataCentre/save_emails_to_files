@@ -1,18 +1,15 @@
-# Process voyage data emails
+# Process CSV emails
 
 Read CSV from emails that are retrieved with IMAP.
 Then create and populate database tables with rows from the CSV.
 
-The tables can be used to serve out voyage tracks and data with
-[GeoServer](http://geoserver.org/).
-
 
 ## Requirements
 
-[PyYAML](http://pyyaml.org/) is needed if settings are in a Yaml file.
+[PyYAML](http://pyyaml.org/) to load settings from a Yaml file.
 
-[cx_Oracle](http://cx-oracle.sourceforge.net/) is needed if you intend
-to use an Oracle database.
+[cx_Oracle](http://cx-oracle.sourceforge.net/) to save data to an Oracle
+database.
 
 The `settings_example.py` and `settings_example.yaml` need to be copied
 and have the `_example` part removed.
