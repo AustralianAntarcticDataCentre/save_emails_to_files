@@ -254,12 +254,11 @@ def process_emails():
 		logger.error('CSV file types could not be read from `settings.yaml`.')
 		return False
 
-	with get_database_client() as database:
-		with get_email_client() as email_client:
-			email_client.select_inbox()
+	with get_database_client() as database, get_email_client() as email_client:
+		email_client.select_inbox()
 
-			for message in email_client.loop_email_messages():
-				process_message(database, message, csv_file_types)
+		for message in email_client.loop_email_messages():
+			process_message(database, message, csv_file_types)
 
 	return True
 
