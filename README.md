@@ -1,24 +1,29 @@
 # Process voyage data emails
 
 Read CSV from emails that are retrieved with IMAP.
+Then create and populate database tables with rows from the CSV.
 
-Populate the voyage data tables with a row for each email.
+The tables can be used to serve out voyage tracks and data with
+[GeoServer](http://geoserver.org/).
 
-The tables are used to serve out voyage tracks and data in GeoServer.
+
+## Requirements
+
+[PyYAML](http://pyyaml.org/) is needed if settings are in a Yaml file.
+
+[cx_Oracle](http://cx-oracle.sourceforge.net/) is needed if you intend
+to use an Oracle database.
+
+The `settings_example.py` and `settings_example.yaml` need to be copied
+and have the `_example` part removed.
+These new files should be modified to contain local settings.
 
 
 ## Usage
 
+Once that configuration is complete, you can run the main script:
+
 	python main.py
-
-- Connects to the IMAP server.
-
-- Loops over emails in the inbox.
-  Checks if the sender and subject are correct.
-
-- Create the table, if necessary.
-
-- Add the email data as a row in the table.
 
 
 ## Helpful articles and documentation
