@@ -166,3 +166,35 @@ class DatabaseServer:
 		cur = self.cursor()
 		cur.execute(sql)
 		cur.close()
+
+	def insert_row(self, table_name, fields):
+		"""
+		Insert the values into the table.
+		"""
+
+		# Make sure the table name given is valid.
+		if not TABLE_CHECK.match(table_name):
+			raise ValueError('Table name is invalid.')
+
+		#pairs = list(fields.items())
+		#names, values = list(zip(*pairs))
+
+		names = []
+		values = []
+
+		for name in fields.keys():
+			if not COLUMN_CHECK.match(name):
+				continue
+
+			names.append(name)
+			values.append(':' + name)
+
+		names_sql = ','.join(names)
+		values_sql = ','.join(values)
+
+		sql_base = 'INSERT INTO {0} ({1}) VALUES ({2})'
+		sql = sql_base.format(table_name, names_sql, values_sql)
+
+		cur = self.cursor()
+		cur.execute(sql, fields)
+		cur.close()
