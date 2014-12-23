@@ -161,6 +161,13 @@ def process_message(database, message, csv_file_types):
 		types of CSV emails that can be processed.
 
 
+	Raises
+	------
+
+	KeyError
+		If any of the required settings are not in the CSV types dictionary.
+
+
 	Returns
 	-------
 
