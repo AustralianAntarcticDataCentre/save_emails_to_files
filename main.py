@@ -217,6 +217,8 @@ def process_message(database, message, csv_file_types):
 		# Get a dict of the values matched in the regex.
 		match_dict = match_data.groupdict()
 
+		logger.debug('Extracted %s from subject.', match_dict)
+
 		save_table = csv_type['save_table']
 
 		# Get the table name template.
@@ -232,6 +234,11 @@ def process_message(database, message, csv_file_types):
 			columns = csv_type['load_csv']['columns']
 
 			database.create_table(table_name, columns)
+
+		else:
+			logger.debug('Table "%s" exists.', table_name)
+
+		raise Exception('Stopper')
 
 		parser = VoyageEmailParser(database, csv_type, table_name, match_dict)
 		parser.process_message(message)

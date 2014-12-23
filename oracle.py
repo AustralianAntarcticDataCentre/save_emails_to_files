@@ -17,6 +17,13 @@ import cx_Oracle
 COLUMN_CHECK = re.compile(r'^\w+$')
 TABLE_CHECK = re.compile(r'^\w+$')
 
+# Uses lambdas in case extra settings are required to define the type.
+COLUMN_TYPE = dict(
+	datetime=lambda settings: 'TIMESTAMP',
+	float=lambda settings: 'NUMBER',
+	int=lambda settings: 'INTEGER',
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,6 +39,7 @@ class DatabaseServer:
 		"""
 
 		self.con = cx_Oracle.connect(self.connection_string)
+		self.con.autocommit = True
 		return self
 
 	def __exit__(self, type, value, traceback):
@@ -84,12 +92,12 @@ class DatabaseServer:
 
 		cur = self.cursor()
 		cur.execute(sql, t=table_name)
-		exists = 0 < cur.rowcount
+		exists = cur.fetchone() is not None
 		cur.close()
 
 		return exists
 
-	def create_table(self, table_name, load_csv):
+	def create_table(self, table_name, columns):
 		"""
 		Create a table containing database fields for CSV columns.
 
@@ -100,8 +108,8 @@ class DatabaseServer:
 		table_name : str
 			Name of the table to create.
 
-		load_csv : dict
-			Dictionary of details of CSV columns.
+		columns : dict
+			Details on the CSV columns.
 
 
 		Raises
@@ -109,12 +117,6 @@ class DatabaseServer:
 
 		ValueError
 			If the table name is invalid.
-
-
-		Returns
-		-------
-		dict
-			Lookup table fields from CSV column names.
 		"""
 
 		# Make sure the table name given is valid.
@@ -123,47 +125,44 @@ class DatabaseServer:
 
 		csv_column_lookup = {}
 
-		columns = load_csv['columns']
 		columns_sql_list = []
 
-		for csv_name, details in columns:
-			if 'name' in details:
-				col_name = details['name']
-			else:
-				col_name = csv_name
+		# Loop each of the CSV column types defined in the settings.
+		for csv_name, details in columns.items():
+			# Update the CSV column name if another was given.
+			csv_name = details.get('csv', csv_name)
 
-			# Move to the next column if the name is invalid.
+			# Use the CSV column name if a database name is not given.
+			col_name = details.get('field', csv_name)
+
+			# Ensure the column name is valid.
 			if not COLUMN_CHECK.match(col_name):
 				continue
 
-			# Move to the next column if a type was not given.
+			# Ensure a type name was given.
 			if 'type' not in details:
 				continue
 
-			col_type = details['type']
+			col_type_maker = COLUMN_TYPE.get(details['type'])
 
-			if 'float' == col_type:
-				col_sql = 'NUMBER'
-
-			elif 'int' == col_type:
-				col_sql = 'NUMBER'
-
-			# Move to the next column if the type is not known.
-			else:
+			# Ensure an SQL type can be created.
+			if col_type_maker is None:
 				continue
 
-			sql = '{0} {1}'.format(col_name, col_sql)
-			columns_sql_list.append(sql)
+			# Get the SQL to define this column type.
+			col_type_sql = col_type_maker(details)
 
-			csv_column_lookup[csv_name] = col_name
+			# Add the column name and type in the SQL create table format.
+			sql = '{0} {1}'.format(col_name, col_type_sql)
+			columns_sql_list.append(sql)
 
 		# Join the column definitions for the CREATE TABLE statement.
 		columns_sql = ','.join(columns_sql_list)
 
 		sql = "CREATE TABLE {0} ({1})".format(table_name, columns_sql)
 
+		logger.debug(sql)
+
 		cur = self.cursor()
 		cur.execute(sql)
 		cur.close()
-
-		return csv_column_lookup
