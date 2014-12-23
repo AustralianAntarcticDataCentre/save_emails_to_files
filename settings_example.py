@@ -24,10 +24,12 @@ CSV_FOLDER = os.getcwd()
 SETTINGS_YAML_PATH = os.path.join(os.getcwd(), 'settings.yaml')
 
 
+#- file: %(pathname)s
+#  function: %(funcName)s
 LOGGING_FORMAT = '''
-- file: %(pathname)s
-  level: %(levelname)s
+- level: %(levelname)s
   line: %(lineno)s
+  logger: %(name)s
   message: |
     %(message)s
   time: %(asctime)s
