@@ -149,3 +149,37 @@ class EmailServer:
 			yield self.get_email_message(uid)
 
 		logger.debug('Finished looping UID list.')
+
+	def list_folders(self):
+		"""
+		List all the folders on the mail server.
+
+
+		Raises
+		------
+
+		EmailCheckError
+			If the folders cannot be listed.
+
+
+		Returns
+		-------
+
+		list
+			List of folder names.
+		"""
+
+		ok, folders = self.mail.list()
+		if ok != OK:
+			raise EmailCheckError('Failed to list the folders.')
+
+		return folders
+
+	def move_message(self, uid, folder):
+		"""
+		Move a message to a different folder.
+		"""
+
+		#ok, result = self.mail.uid('copy', uid, folder)
+		#ok, result = self.mail.expunge()
+		pass
