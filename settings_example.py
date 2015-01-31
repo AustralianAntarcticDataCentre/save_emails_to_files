@@ -35,7 +35,10 @@ LOGGING_FORMAT = '''
   time: %(asctime)s
 '''.strip()
 
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_KWARGS = dict(
+	fromat=LOGGING_FORMAT,
+	level=logging.DEBUG
+)
 
 
 def get_csv_file_types():
