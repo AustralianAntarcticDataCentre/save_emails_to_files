@@ -90,7 +90,9 @@ class EmailServer:
 
 		self.select_inbox()
 
-		#ok, data = mail.search(None, 'ALL')
+		# Raises "imaplib.error: got more than 10000 bytes" when the mailbox
+		# contains too many messages.
+		#ok, data = self.mail.search(None, 'ALL')
 		ok, raw_uid_list = self.mail.uid('search', None, 'ALL')
 		if ok != OK:
 			raise EmailCheckError('Failed searching mail.')
