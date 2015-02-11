@@ -97,7 +97,7 @@ class DatabaseServer:
 
 		return exists
 
-	def create_table(self, table_name, columns):
+	def create_table(self, table_name, columns, constraints=None):
 		"""
 		Create a table containing database fields for CSV columns.
 
@@ -159,13 +159,23 @@ class DatabaseServer:
 		# Join the column definitions for the CREATE TABLE statement.
 		columns_sql = ','.join(columns_sql_list)
 
-		sql = "CREATE TABLE {0} ({1})".format(table_name, columns_sql)
+		sql = 'CREATE TABLE {0} ({1})'.format(table_name, columns_sql)
+
+		if constraints is not None:
+			unique = constraints.get('unique', [])
+			for column in unique:
+				name = '{}_unique'.format(column)
+				sql += ', CONSTRAINT {} UNIQUE ({})'.format(name, column)
 
 		logger.debug(sql)
 
 		cur = self.cursor()
 		cur.execute(sql)
 		cur.close()
+
+		# Alternative approach using another SQL statement.
+		#'ALTER TABLE {} ADD CONSTRAINT {} UNIQUE ({})'.format(
+			#table_name, name, column)
 
 	def insert_row(self, table_name, fields):
 		"""
