@@ -3,13 +3,16 @@ Read voyage data emails.
 """
 
 import email
-from imaplib import IMAP4_SSL
+import imaplib
 import logging
 
 
 OK = 'OK'
 
 logger = logging.getLogger(__name__)
+
+# http://stackoverflow.com/questions/25457441/reading-emails-with-imaplib-got-more-than-10000-bytes-error
+imaplib._MAXLINE = 40000
 
 
 class EmailCheckError(Exception):
@@ -24,7 +27,7 @@ class EmailServer:
 		self.username = username
 
 	def __enter__(self):
-		self.mail = IMAP4_SSL(self.server)
+		self.mail = imaplib.IMAP4_SSL(self.server)
 
 		logger.debug('Attempting to login as "%s".', self.username)
 
