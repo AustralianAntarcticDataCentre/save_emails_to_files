@@ -137,9 +137,6 @@ class EmailAccount:
 
 		Yields the message from `get_email_message()` for each UID.
 
-		>>> for message in loop_email_messages(mail):
-		...     print(message)
-
 
 		Raises
 		------
