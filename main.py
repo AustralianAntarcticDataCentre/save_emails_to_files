@@ -1,5 +1,15 @@
 """
 Populate voyage data tables from CSV emails.
+
+Running as a script calls `process_emails()`.
+
+This uses `get_csv_file_types()` to get email details for searching, and
+opens email and database connections.
+It then calls `process_message()` for each email.
+
+This checks if the email matches a CSV file type.
+A match creates a `VoyageEmailParser` and calls `process_message()`.
+Look in the `csv_email` module for how this works.
 """
 
 from datetime import datetime
