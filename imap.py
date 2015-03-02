@@ -19,7 +19,7 @@ class EmailCheckError(Exception):
 	pass
 
 
-class EmailServer:
+class EmailAccount:
 
 	def __init__(self, server, username, password):
 		self.password = password
