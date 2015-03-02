@@ -1,5 +1,11 @@
 """
 Read voyage data emails.
+
+	>>> with EmailAccount('imap4.example.com', 'my_user', 'my_pass') as acc:
+	>>>     acc.select_inbox()
+	>>>     for message in acc.loop_email_messages():
+	...         print(message['From'])
+	...         print(message['Subject'])
 """
 
 import email
