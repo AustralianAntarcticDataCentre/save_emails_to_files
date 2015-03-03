@@ -158,9 +158,9 @@ class EmailAccount:
 
 		logger.debug('Finished looping UID list.')
 
-	def list_folders(self):
+	def loop_folder_names(self):
 		"""
-		List all the folders on the mail server.
+		Generates all folder names on the mail server.
 
 
 		Raises
@@ -168,20 +168,27 @@ class EmailAccount:
 
 		EmailCheckError
 			If the folders cannot be listed.
-
-
-		Returns
-		-------
-
-		list
-			List of folder names.
 		"""
 
 		ok, folders = self.mail.list()
 		if ok != OK:
 			raise EmailCheckError('Failed to list the folders.')
 
-		return folders
+		for folder_details_bytes in folders:
+			folder_details = folder_details_bytes.decode('utf-8')
+
+			# Strip first part (in brackets).
+			i = folder_details.find(')')
+			folder_name = folder_details[i + 2:]
+
+			# Strip middle part ("/").
+			i = folder_name.find(' ')
+			folder_name = folder_name[i + 1:]
+
+			# Strip quotes from folder name.
+			folder_name = folder_name.strip('"')
+
+			yield folder_name
 
 	def move_message(self, uid, folder):
 		"""
