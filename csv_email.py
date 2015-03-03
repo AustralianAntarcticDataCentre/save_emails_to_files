@@ -174,6 +174,15 @@ class CSVEmailParser:
 		pass
 
 
+def get_move_folder(csv_type, match_dict):
+	"""
+	Get the folder name for moving the matched CSV message.
+	"""
+
+	folder_format = csv_type['move_message_to'].strip()
+	return folder_format.format(**match_dict)
+
+
 def type_accepts_message(message, csv_type):
 	"""
 	Decide if the message can be parsed into a CSV record using this type.
