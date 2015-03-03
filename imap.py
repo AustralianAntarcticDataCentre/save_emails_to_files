@@ -135,7 +135,7 @@ class EmailAccount:
 		#return email.message_from_string(raw_email_str)
 		return email.message_from_bytes(raw_email_bytes)
 
-	def loop_email_messages(self):
+	def loop_email_messages(self, include_uid=False):
 		"""
 		Generate email messages from the current mailbox.
 
@@ -158,7 +158,10 @@ class EmailAccount:
 		logger.debug('Start looping UID list.')
 
 		for uid in uid_list:
-			yield self.get_email_message(uid)
+			if include_uid:
+				yield self.get_email_message(uid), uid
+			else:
+				yield self.get_email_message(uid)
 
 		logger.debug('Finished looping UID list.')
 
@@ -197,6 +200,18 @@ class EmailAccount:
 		Move a message to a different folder.
 		"""
 
-		#ok, result = self.mail.uid('copy', uid, folder)
-		#ok, result = self.mail.expunge()
-		pass
+		ok, data = self.mail.uid('COPY', uid, folder)
+		if ok != OK:
+			msg = 'Failed copying message {}.'.format(uid)
+			raise EmailCheckError(msg)
+
+		logger.info('Copied %s to %s.', uid, folder)
+
+		ok, data = self.mail.uid('STORE', uid, '+FLAGS', '(\Deleted)')
+		if ok != OK:
+			msg = 'Failed copying message {}.'.format(uid)
+			raise EmailCheckError(msg)
+
+		logger.info('Marked %s as deleted.', uid)
+
+		self.mail.expunge()
