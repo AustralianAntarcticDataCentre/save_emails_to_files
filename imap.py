@@ -11,6 +11,7 @@ Read voyage data emails.
 import email
 import imaplib
 import logging
+import re
 
 
 OK = 'OK'
@@ -19,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 # http://stackoverflow.com/questions/25457441/reading-emails-with-imaplib-got-more-than-10000-bytes-error
 imaplib._MAXLINE = 40000
+
+# Matches the folder details format used by IMAP.
+folder_regex = re.compile('\((?P<start>[^)]+)\) "/" "?(?P<folder>.+)"?$')
 
 
 class EmailCheckError(Exception):
@@ -176,17 +180,15 @@ class EmailAccount:
 
 		for folder_details_bytes in folders:
 			folder_details = folder_details_bytes.decode('utf-8')
+			logger.info('Reading folder %s', folder_details)
 
-			# Strip first part (in brackets).
-			i = folder_details.find(')')
-			folder_name = folder_details[i + 2:]
+			match_data = folder_regex.match(folder_details)
 
-			# Strip middle part ("/").
-			i = folder_name.find(' ')
-			folder_name = folder_name[i + 1:]
+			if match_data is None:
+				logger.warning('Folder %s does not match format.', folder_details)
+				continue
 
-			# Strip quotes from folder name.
-			folder_name = folder_name.strip('"')
+			folder_name = match_data.groupdict()['folder']
 
 			yield folder_name
 
