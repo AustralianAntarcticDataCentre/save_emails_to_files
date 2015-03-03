@@ -42,5 +42,7 @@ Once that configuration is complete, you can run the main script:
 
 - [INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4](http://tools.ietf.org/html/rfc1730.html)
 
+- [Move an email in GMail with Python and imaplib](https://stackoverflow.com/questions/3527933/move-an-email-in-gmail-with-python-and-imaplib)
+
 - [Python - imaplib IMAP example with Gmail](http://yuji.wordpress.com/2011/06/22/python-imaplib-imap-example-with-gmail/).
   This article in particular was very helpful as a starting point.
