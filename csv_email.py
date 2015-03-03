@@ -177,6 +177,8 @@ class CSVEmailParser:
 def type_accepts_message(message, csv_type):
 	email_from = email.utils.parseaddr(message['From'])[1]
 
+	subject = message['Subject']
+
 	check = csv_type['check']
 
 	required_from = check['from']
