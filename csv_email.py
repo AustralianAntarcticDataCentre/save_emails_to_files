@@ -7,13 +7,13 @@ It does not contain any code for accessing email accounts.
 """
 
 import csv
-#import email
+import email
 from io import StringIO
-#import logging
+import logging
 import quopri
 
 
-#logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class CSVEmailParser:
@@ -171,3 +171,38 @@ class CSVEmailParser:
 		"""
 
 		pass
+
+
+def type_accepts_message(message, csv_type):
+	email_from = email.utils.parseaddr(message['From'])[1]
+
+	check = csv_type['check']
+
+	required_from = check['from']
+
+	# Skip this message if it did not come from the correct sender.
+	if email_from != required_from:
+		msg = 'Email is not from the correct sender (%s != %s).'
+		logger.warning(msg, email_from, required_from)
+		return None
+
+	# Use the compiled RegEx if it is available.
+	if 'subject_regex_compiled' in check:
+		subject_regex = check['subject_regex_compiled']
+
+	# Compile and save the RegEx otherwise.
+	else:
+		subject_regex_list = check['subject_regex']
+		subject_regex = re.compile(''.join(subject_regex_list))
+		check['subject_regex_compiled'] = subject_regex
+
+	# Check if the message subject matches the RegEx.
+	match_data = subject_regex.match(subject)
+
+	# Skip this message if the subject does not match the RegEx.
+	if match_data is None:
+		logger.warning('Email subject does not match the required format.')
+		return None
+
+	# Get a dict of the values matched in the regex.
+	return match_data.groupdict()

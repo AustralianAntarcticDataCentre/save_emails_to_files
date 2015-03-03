@@ -18,7 +18,7 @@ import logging
 import os
 import re
 
-from csv_email import CSVEmailParser
+from csv_email import CSVEmailParser, type_accepts_message
 from settings import (
 	CSV_FOLDER, get_csv_file_types, get_database_client, get_email_client,
 	LOGGING_KWARGS
@@ -189,36 +189,9 @@ def process_message(database, message, csv_file_types):
 	logger.debug('Email subject is "%s".', subject)
 
 	for csv_type in csv_file_types:
-		check = csv_type['check']
-
-		required_from = check['from']
-
-		# Skip this message if it did not come from the correct sender.
-		if email_from != required_from:
-			msg = 'Email is not from the correct sender (%s != %s).'
-			logger.warning(msg, email_from, required_from)
+		match_dict = type_accepts_message(message, csv_type)
+		if match_dict is None:
 			continue
-
-		# Use the compiled RegEx if it is available.
-		if 'subject_regex_compiled' in check:
-			subject_regex = check['subject_regex_compiled']
-
-		# Compile and save the RegEx otherwise.
-		else:
-			subject_regex_list = check['subject_regex']
-			subject_regex = re.compile(''.join(subject_regex_list))
-			check['subject_regex_compiled'] = subject_regex
-
-		# Check if the message subject matches the RegEx.
-		match_data = subject_regex.match(subject)
-
-		# Skip this message if the subject does not match the RegEx.
-		if match_data is None:
-			logger.warning('Email subject does not match the required format.')
-			continue
-
-		# Get a dict of the values matched in the regex.
-		match_dict = match_data.groupdict()
 
 		logger.debug('Extracted %s from subject.', match_dict)
 
