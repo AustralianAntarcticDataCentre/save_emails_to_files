@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 imaplib._MAXLINE = 40000
 
 # Matches the folder details format used by IMAP.
-folder_regex = re.compile('\((?P<start>[^)]+)\) "/" "?(?P<folder>.+)"?$')
+folder_regex = re.compile('\((?P<flags>[^)]+)\) "/" "?(?P<folder>.+)"?$')
 
 
 class EmailCheckError(Exception):
