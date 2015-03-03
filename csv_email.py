@@ -11,6 +11,7 @@ import email
 from io import StringIO
 import logging
 import quopri
+import re
 
 
 logger = logging.getLogger(__name__)
