@@ -16,7 +16,6 @@ from datetime import datetime
 import email
 import logging
 import os
-import re
 
 from csv_email import CSVEmailParser, type_accepts_message
 from settings import (
