@@ -175,6 +175,10 @@ class CSVEmailParser:
 
 
 def type_accepts_message(message, csv_type):
+	"""
+	Decide if the message can be parsed into a CSV record using this type.
+	"""
+
 	email_from = email.utils.parseaddr(message['From'])[1]
 
 	subject = message['Subject']
