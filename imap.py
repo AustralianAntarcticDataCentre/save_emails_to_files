@@ -1,5 +1,5 @@
 """
-Read voyage data emails.
+Read emails from an IMAP server.
 
 	>>> with EmailAccount('imap4.example.com', 'my_user', 'my_pass') as acc:
 	>>>     acc.select_inbox()
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 imaplib._MAXLINE = 40000
 
 # Matches the folder details format used by IMAP.
-folder_regex = re.compile('\((?P<flags>[^)]+)\) "/" "?(?P<folder>.+)"?$')
+folder_regex = re.compile('\((?P<flags>[^)]+)\) "/" "?(?P<folder>.+[^"])"?$')
 
 
 class EmailCheckError(Exception):
@@ -30,6 +30,8 @@ class EmailCheckError(Exception):
 
 
 class EmailAccount:
+
+	INBOX = 'INBOX'
 
 	def __init__(self, server, username, password):
 		self.password = password
@@ -51,30 +53,30 @@ class EmailAccount:
 		#self.mail.close()
 		pass
 
-	def select_inbox(self):
+	def select_folder(self, folder_name):
 		"""
-		Access the inbox.
+		Access the given folder.
 
 
 		Raises
 		------
 
 		EmailCheckError
-			If the inbox cannot be accessed or the message count fails.
+			If the folder cannot be accessed or the message count fails.
 		"""
 
-		logger.debug('Attempting to access the inbox.')
+		logger.debug('Attempting to access %s.', folder_name)
 
-		ok, mail_count_list = self.mail.select('INBOX')
+		ok, mail_count_list = self.mail.select(folder_name)
 		if ok != OK:
-			raise EmailCheckError('Failed selecting the inbox.')
+			raise EmailCheckError('Failed selecting %s.', folder_name)
 
 		try:
 			mail_count = int(mail_count_list[0])
 		except ValueError as e:
 			raise EmailCheckError('Failed to get the message count.') from e
 
-		logger.info('Found %s items in the inbox.', mail_count)
+		logger.info('Found %s items in %s.', mail_count, folder_name)
 
 	def get_uid_list(self):
 		"""
@@ -100,8 +102,6 @@ class EmailAccount:
 		"""
 
 		logger.debug('Attempting to get the message UID list.')
-
-		self.select_inbox()
 
 		# Raises "imaplib.error: got more than 10000 bytes" when the mailbox
 		# contains too many messages.
@@ -135,9 +135,9 @@ class EmailAccount:
 		#return email.message_from_string(raw_email_str)
 		return email.message_from_bytes(raw_email_bytes)
 
-	def loop_email_messages(self, include_uid=False):
+	def loop_messages(self, include_uid=False):
 		"""
-		Generate email messages from the current mailbox.
+		Generate messages from the current mailbox.
 
 		Yields the message from `get_email_message()` for each UID.
 
@@ -183,7 +183,7 @@ class EmailAccount:
 
 		for folder_details_bytes in folders:
 			folder_details = folder_details_bytes.decode('utf-8')
-			logger.info('Reading folder %s', folder_details)
+			logger.debug('Reading folder %s', folder_details)
 
 			match_data = folder_regex.match(folder_details)
 

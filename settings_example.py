@@ -14,12 +14,11 @@ import re
 import yaml
 
 from imap import EmailCheckError, EmailServer
-from postgresql import DatabaseServer
 
 
-# If this is set to a valid path, all CSV files extracted from emails will be
-# stored in sub-folders within it.
-CSV_FOLDER = os.getcwd()
+# If this is set to a valid path, all files extracted from emails will be stored
+# in sub-folders within it.
+SAVE_FOLDER = os.getcwd()
 
 SETTINGS_YAML_PATH = os.path.join(os.getcwd(), 'settings.yaml')
 
@@ -41,18 +40,13 @@ LOGGING_KWARGS = dict(
 )
 
 
-def get_csv_file_types():
-	csv_file_types = None
+def get_file_types():
+	file_types = None
 
 	with open(SETTINGS_YAML_PATH) as r:
-		csv_file_types = yaml.load(r)
+		file_types = yaml.load(r)
 
-	return csv_file_types
-
-
-def get_database_client():
-	con = 'my_username/my_password@database.example.com:5432/my_database'
-	return DatabaseServer(con)
+	return file_types
 
 
 def get_email_client():

@@ -1,15 +1,11 @@
-# Process CSV emails
+# Download emails
 
-Read CSV from emails that are retrieved with IMAP.
-Then create and populate database tables with rows from the CSV.
+Save emails from an IMAP server into local files.
 
 
 ## Requirements
 
 [PyYAML](http://pyyaml.org/) to load settings from a Yaml file.
-
-[cx_Oracle](http://cx-oracle.sourceforge.net/) to save data to an Oracle
-database.
 
 The `settings_example.py` and `settings_example.yaml` need to be copied
 and have the `_example` part removed.
