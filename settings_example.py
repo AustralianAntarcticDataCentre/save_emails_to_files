@@ -35,7 +35,7 @@ LOGGING_FORMAT = '''
 '''.strip()
 
 LOGGING_KWARGS = dict(
-	fromat=LOGGING_FORMAT,
+	format=LOGGING_FORMAT,
 	level=logging.DEBUG
 )
 
