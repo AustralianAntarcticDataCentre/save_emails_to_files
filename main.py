@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Download email contents to files.
 
@@ -6,146 +7,18 @@ This uses `get_email_client()` to open an email server connection and
 then `get_file_types()` to check which email to save.
 """
 
-import email
 import logging
 import os
-import quopri
 import re
 
+from message_check import check_message, get_email_folders
+from message_content import get_message_text
 from settings import (
-	EMAIL_FOLDER_RE, SAVE_FOLDER, get_file_types, get_email_client,
-	LOGGING_KWARGS
+	SAVE_FOLDER, get_file_types, get_email_client, LOGGING_KWARGS
 )
 
 
 logger = logging.getLogger(__name__)
-
-
-def check_message(message, check_details):
-	"""
-	Check if the message can be parsed with the given details.
-
-
-	Parameters
-	----------
-
-	message : email.message.Message
-		https://docs.python.org/3.4/library/email.message.html#email.message.Message
-
-	check_details : dict
-		Contains checks and settings for the given message.
-
-
-	Returns
-	-------
-
-	dict
-		Dictionary of match details extracted from the message.
-	"""
-
-	check = check_details.get('check')
-
-	if check is None:
-		return None
-
-
-	if 'from' in check:
-		# parseaddr() splits "From" into name and address.
-		# https://docs.python.org/3/library/email.util.html#email.utils.parseaddr
-		email_from = email.utils.parseaddr(message['From'])[1]
-
-		logger.debug('Email is from "%s".', email_from)
-
-		required_from = check['from']
-
-		# Skip this message if it did not come from the correct sender.
-		if email_from != required_from:
-			msg = 'Email is not from the correct sender (%s != %s).'
-			logger.warning(msg, email_from, required_from)
-			return None
-
-
-	subject = message['Subject']
-
-	logger.debug('Email subject is "%s".', subject)
-
-	# Use the compiled RegEx if it is available.
-	subject_regex = check.get('subject_regex_compiled')
-
-	# Compile and save the RegEx otherwise.
-	if subject_regex is None:
-		subject_regex_list = [s.strip() for s in check['subject_regex']]
-		subject_regex_text = ''.join(subject_regex_list)
-		subject_regex = re.compile(subject_regex_text)
-		check['subject_regex_compiled'] = subject_regex
-	else:
-		subject_regex_text = subject_regex.pattern
-
-	# Check if the message subject matches the RegEx.
-	match_data = subject_regex.match(subject)
-
-	# Skip this message if the subject does not match the RegEx.
-	if match_data is None:
-		logger.debug('Regex is %s.', subject_regex_text)
-		logger.warning('Email subject does not match the required format.')
-		return None
-
-	# Get a dict of the values matched in the regex.
-	return match_data.groupdict()
-
-
-def get_message_content(message):
-	"""
-	Get message content from an email.
-
-	Uses `is_multipart()` and `get_payload()` to recursively call this
-	function and build the message content from the parts.
-
-
-	Parameters
-	----------
-
-	message : email.message.Message
-		https://docs.python.org/3.4/library/email.message.html#email.message.Message
-
-
-	Returns
-	-------
-
-	str
-		Raw content of the message that needs to be decoded.
-	"""
-
-	if not message.is_multipart():
-		return message.get_payload()
-
-	parts = [
-		get_message_content(payload)
-		for payload in message.get_payload()
-	]
-
-	return ''.join(parts)
-
-
-def get_message_text(message):
-	"""
-	Get text content from an email message.
-
-	Uses `get_message_content()` to get the raw mail content.
-
-
-	Parameters
-	----------
-
-	message : email.message.Message
-		https://docs.python.org/3.4/library/email.message.html#email.message.Message
-	"""
-
-	raw_content = get_message_content(message)
-
-	content_bytes = quopri.decodestring(raw_content, False)
-
-	return content_bytes.decode('utf-8')
 
 
 def process_emails():
@@ -167,19 +40,7 @@ def process_emails():
 		return False
 
 	with get_email_client() as email_client:
-		#email_client.select_folder(email_client.INBOX)
-
-		folders = [
-			name
-			for name in email_client.loop_folder_names()
-			if EMAIL_FOLDER_RE.match(name) is not None
-		]
-
-		#folders = []
-		#for name in email_client.loop_folder_names():
-			#match_data = EMAIL_FOLDER_RE.match(name)
-			#if match_data is not None:
-				#folders.append(name)
+		folders = get_email_folders(email_client)
 
 		for folder_name in folders:
 			email_client.select_folder(folder_name)
