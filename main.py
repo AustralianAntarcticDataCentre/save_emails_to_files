@@ -74,15 +74,19 @@ def check_message(message, check_details):
 
 	# Compile and save the RegEx otherwise.
 	if subject_regex is None:
-		subject_regex_list = check['subject_regex']
-		subject_regex = re.compile(''.join(subject_regex_list))
+		subject_regex_list = [s.strip() for s in check['subject_regex']]
+		subject_regex_text = ''.join(subject_regex_list)
+		subject_regex = re.compile(subject_regex_text)
 		check['subject_regex_compiled'] = subject_regex
+	else:
+		subject_regex_text = subject_regex.pattern
 
 	# Check if the message subject matches the RegEx.
 	match_data = subject_regex.match(subject)
 
 	# Skip this message if the subject does not match the RegEx.
 	if match_data is None:
+		logger.debug('Regex is %s.', subject_regex_text)
 		logger.warning('Email subject does not match the required format.')
 		return None
 
