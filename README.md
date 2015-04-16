@@ -16,7 +16,7 @@ These new files should be modified to contain local settings.
 
 Once that configuration is complete, you can run the main script:
 
-	python main.py
+	python download_emails.py
 
 
 ## Helpful articles and documentation
