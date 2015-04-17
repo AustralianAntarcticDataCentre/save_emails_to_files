@@ -3,120 +3,153 @@
 Download email contents to files.
 
 Running this as a script calls `process_emails()`.
-This uses `get_email_client()` to open an email server connection and
-then `get_file_types()` to check which email to save.
+This uses `get_email_server()` to open an email server connection and
+then `get_all_checks()` to check which emails to save.
 """
 
 import logging
 import os
 import re
 
-from message_check import check_message, get_email_folders
+from message_check import check_message
 from message_content import get_message_text
 from settings import (
-	SAVE_FOLDER, get_file_types, get_email_client, LOGGING_KWARGS
+	SAVE_FOLDER, get_all_checks, get_email_server, LOGGING_KWARGS
 )
 
 
 logger = logging.getLogger(__name__)
 
 
-def process_emails():
+def all_checks_on_message(message, all_checks):
 	"""
-	Connect to the email server and check for messages to save.
+	Return details if the message matches one of the checks.
 
-
-	Returns
-	-------
-
-	bool
-		False if settings cannot be loaded.
-	"""
-
-	file_types = get_file_types()
-
-	if file_types is None:
-		logger.error('File types could not be read from settings.')
-		return False
-
-	with get_email_client() as email_client:
-		folders = get_email_folders(email_client)
-
-		for folder_name in folders:
-			email_client.select_folder(folder_name)
-
-			for message in email_client.loop_messages():
-				process_message(message, file_types)
-
-	return True
-
-
-def process_message(message, all_checks):
-	"""
-	Check and save a message if it matches one of the checks.
+	If no check matches the message then None is returned.
 
 
 	Parameters
 	----------
 
-	message : email.message.Message
-		Message (hopefully) with CSV content to be processed.
-
 	all_checks : list
-		List of dictionaries containing checks and settings for the different
-		types of emails that should be saved.
+		List of dictionaries containing check settings for the different types
+		of emails.
+
+	message : email.message.Message
+		Message to be checked.
+
+
+	Returns
+	-------
+
+	None
+	tuple(dict, dict)
+		Tuple with the matching check and the values from the match.
+	"""
+
+	for check_i, settings in enumerate(all_checks):
+		logger.debug('Check %s on message.', check_i)
+
+		match_values = check_message(message, settings)
+
+		# Continue on next check if this one failed to match.
+		if match_values is None:
+			continue
+
+		logger.debug('Extracted %s from message.', match_values)
+
+		# Return the matched check and the values from it.
+		return (settings, match_values)
+
+	# Returns None if none of the checks matched the given message.
+	return None
+
+
+def move_message_to_folder(server, uid, settings, values):
+	"""
+	Move the given message to a different folder on the server.
+
+
+	Parameters
+	----------
+
+	server : imap.EmailAccount
+		Connection to the email server.
+
+	settings : dict
+		Dictionary of settings that matched this message.
+
+	uid : int
+		UID for the message from the email server.
+
+	values : dict
+		Dictionary of values gathered from the match.
 
 
 	Returns
 	-------
 
 	bool
-		True if the message was processed, False if no handler could be found.
+		True if the message was moved to the folder, False otherwise.
 	"""
 
-	for check_i, check_details in enumerate(all_checks):
-		match_dict = check_message(message, check_details)
+	try:
+		folder_format = settings['move_message_to'].strip()
+	except KeyError:
+		logger.error('Settings does not contain a folder format.')
+		return False
 
-		if match_dict is None:
-			continue
+	# Create the folder path from the format settings and matched values.
+	folder_path = folder_format.format(**values)
 
-		logger.debug('Extracted %s from message.', match_dict)
+	server.move_message(uid, folder_path)
 
-		try:
-			file_name_format = check_details['save_file_format'].strip()
-		except KeyError:
-			logger.error('Check %s does not contain file format.', check_i + 1)
-			continue
-
-		# Create the file name from the format settings and matched details.
-		file_name = file_name_format.format(**match_dict)
-
-		save_file_path = os.path.join(SAVE_FOLDER, file_name)
-
-		# Check if the email has already been saved.
-		if os.path.exists(save_file_path):
-			logger.info('File %s already exists.', save_file_path)
-			return True
-
-		# Get the parent folder path.
-		folder_path = os.path.dirname(save_file_path)
-
-		# Create the folder path if it does not exist already.
-		if not os.path.exists(folder_path):
-			os.makedirs(folder_path)
-
-		save_message_to_file(message, save_file_path)
-
-		# No need to check other CSV parsers once one is complete.
-		return True
-
-	# Returns False if none of the checks matched the given message.
-	return False
+	return True
 
 
-def save_message_to_file(message, file_path):
+def process_emails():
 	"""
-	Process a message containing CSV voyage data.
+	Connect to the email server and check for matching messages.
+
+	If a message matches one of the checks then it is saved locally and the
+	message is moved to another folder on the server.
+
+
+	Returns
+	-------
+
+	bool
+		True if all messages were processed.
+	"""
+
+	all_checks = get_all_checks()
+
+	if all_checks is None:
+		logger.error('Message checks could not be loaded.')
+		return False
+
+	with get_email_server() as server:
+		server.select_folder(server.INBOX)
+
+		# Loop messages in the inbox.
+		for message, uid in server.loop_messages(True):
+			result = all_checks_on_message(message, all_checks)
+
+			if result is None:
+				continue
+
+			settings, values = result
+
+			save_message_to_file(message, settings, values)
+
+			move_message_to_folder(server, uid, settings, values)
+
+	return True
+
+
+def save_message_to_file(message, settings, values):
+	"""
+	Save the given message to the local file system.
 
 
 	Parameters
@@ -125,15 +158,44 @@ def save_message_to_file(message, file_path):
 	message : email.message.Message
 		Message with content to be saved.
 
-	file_path : str
-		Full file path to save the message contents to.
+	settings : dict
+		Dictionary of settings that matched this message.
+
+	values : dict
+		Dictionary of values gathered from the match.
 	"""
 
+	try:
+		rel_path_format = settings['save_file_format'].strip()
+	except KeyError:
+		logger.error('Check does not contain file format.')
+		return False
+
+	# Create the file path from the format settings and matched details.
+	rel_path = rel_path_format.format(**values)
+
+	file_path = os.path.join(SAVE_FOLDER, rel_path)
+
+	# Check if the email has already been saved.
+	if os.path.exists(file_path):
+		logger.info('File %s already exists.', file_path)
+		return True
+
+	# Get the parent folder path.
+	folder_path = os.path.dirname(file_path)
+
+	# Create the folder path if it does not exist already.
+	if not os.path.exists(folder_path):
+		os.makedirs(folder_path)
+
+	# Get the text content of the message.
 	content = get_message_text(message)
 
 	# Write the contents of the CSV to the file.
 	with open(file_path, 'w') as f:
 		f.write(content)
+
+	return True
 
 
 if '__main__' == __name__:

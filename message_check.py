@@ -4,8 +4,6 @@ import email
 import logging
 import re
 
-from settings import EMAIL_FOLDER_RE
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +37,8 @@ def check_message(message, check_details):
 
 
 	if 'from' in check:
+		logger.debug(message['From'])
+
 		# parseaddr() splits "From" into name and address.
 		# https://docs.python.org/3/library/email.util.html#email.utils.parseaddr
 		email_from = email.utils.parseaddr(message['From'])[1]
@@ -79,21 +79,5 @@ def check_message(message, check_details):
 		logger.warning('Email subject does not match the required format.')
 		return None
 
-	# Get a dict of the values matched in the regex.
+	# Return a dict of the values matched in the regex.
 	return match_data.groupdict()
-
-
-def get_email_folders(email_client):
-	#email_client.select_folder(email_client.INBOX)
-
-	#folders = []
-	#for name in email_client.loop_folder_names():
-		#match_data = EMAIL_FOLDER_RE.match(name)
-		#if match_data is not None:
-			#folders.append(name)
-
-	return [
-		name
-		for name in email_client.loop_folder_names()
-		if EMAIL_FOLDER_RE.match(name) is not None
-	]

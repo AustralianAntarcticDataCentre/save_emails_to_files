@@ -200,6 +200,8 @@ class EmailAccount:
 		Move a message to a different folder.
 		"""
 
+		logger.debug('Move email %s to %s', uid, folder)
+
 		ok, data = self.mail.uid('COPY', uid, folder)
 		if ok != OK:
 			msg = 'Failed copying message {}.'.format(uid)
