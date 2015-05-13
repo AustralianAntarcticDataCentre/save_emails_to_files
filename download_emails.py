@@ -65,6 +65,78 @@ def all_checks_on_message(message, all_checks):
 	return None
 
 
+def get_message_file_path(settings, values):
+	"""
+	Return the file path where a message should be saved.
+
+
+	Parameters
+	----------
+
+	settings : dict
+		Dictionary of settings that matched this message.
+
+	values : dict
+		Dictionary of values gathered from the match.
+
+
+	Raises
+	------
+
+	KeyError
+		Raised if `save_file_format` is not in the settings.
+
+
+	Returns
+	-------
+
+	str
+		File path to where the message should be saved.
+	"""
+
+	rel_path_format = settings['save_file_format'].strip()
+
+	# Create the file path from the format settings and matched details.
+	rel_path = rel_path_format.format(**values)
+
+	return os.path.join(SAVE_FOLDER, rel_path)
+
+
+def get_message_mail_folder(settings, values):
+	"""
+	Return the mail server folder path where a message should be moved.
+
+
+	Parameters
+	----------
+
+	settings : dict
+		Dictionary of settings that matched this message.
+
+	values : dict
+		Dictionary of values gathered from the match.
+
+
+	Raises
+	------
+
+	KeyError
+		Raised if `move_message_to` is not in the settings.
+
+
+	Returns
+	-------
+
+	str
+		Folder where the message should be moved.
+	"""
+
+	folder_format = settings['move_message_to'].strip()
+
+	# Create the folder path from the format settings and matched values.
+	return folder_format.format(**values)
+
+
 def move_message_to_folder(server, uid, settings, values):
 	"""
 	Move the given message to a different folder on the server.
@@ -80,7 +152,7 @@ def move_message_to_folder(server, uid, settings, values):
 		Dictionary of settings that matched this message.
 
 	uid : int
-		UID for the message from the email server.
+		UID of the message on the email server.
 
 	values : dict
 		Dictionary of values gathered from the match.
@@ -94,13 +166,10 @@ def move_message_to_folder(server, uid, settings, values):
 	"""
 
 	try:
-		folder_format = settings['move_message_to'].strip()
+		folder_path = get_message_mail_folder(settings, values)
 	except KeyError:
 		logger.error('Settings does not contain a folder format.')
 		return False
-
-	# Create the folder path from the format settings and matched values.
-	folder_path = folder_format.format(**values)
 
 	server.move_message(uid, folder_path)
 
@@ -128,20 +197,27 @@ def process_emails():
 		logger.error('Message checks could not be loaded.')
 		return False
 
+	# Open a connection to the mail server.
 	with get_email_server() as server:
+		# Ensure current folder is the inbox.
 		server.select_folder(server.INBOX)
 
 		# Loop messages in the inbox.
 		for message, uid in server.loop_messages(True):
+			# Check message is valid (matched) for saving.
 			result = all_checks_on_message(message, all_checks)
 
+			# Continue with next message if current one failed to match.
 			if result is None:
 				continue
 
+			# Get the match details and the values extracted from these.
 			settings, values = result
 
+			# Save message to the local file system.
 			save_message_to_file(message, settings, values)
 
+			# Move message to another folder on the mail server.
 			move_message_to_folder(server, uid, settings, values)
 
 	return True
@@ -163,25 +239,28 @@ def save_message_to_file(message, settings, values):
 
 	values : dict
 		Dictionary of values gathered from the match.
+
+
+	Returns
+	-------
+
+	bool
+		True if the message is saved.
 	"""
 
+	# Get the file path to where the message should be saved.
 	try:
-		rel_path_format = settings['save_file_format'].strip()
+		file_path = get_message_file_path(settings, values)
 	except KeyError:
 		logger.error('Check does not contain file format.')
 		return False
-
-	# Create the file path from the format settings and matched details.
-	rel_path = rel_path_format.format(**values)
-
-	file_path = os.path.join(SAVE_FOLDER, rel_path)
 
 	# Check if the email has already been saved.
 	if os.path.exists(file_path):
 		logger.info('File %s already exists.', file_path)
 		return True
 
-	# Get the parent folder path.
+	# Get the parent folder path from the file path.
 	folder_path = os.path.dirname(file_path)
 
 	# Create the folder path if it does not exist already.
