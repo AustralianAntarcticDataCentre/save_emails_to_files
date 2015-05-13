@@ -7,6 +7,7 @@ This uses `get_email_server()` to open an email server connection and
 then `get_all_checks()` to check which emails to save.
 """
 
+import argparse
 import logging
 import os
 import re
@@ -176,12 +177,22 @@ def move_message_to_folder(server, uid, settings, values):
 	return True
 
 
-def process_emails():
+def process_emails(folder='', move=True):
 	"""
 	Connect to the email server and check for matching messages.
 
 	If a message matches one of the checks then it is saved locally and the
 	message is moved to another folder on the server.
+
+
+	Parameters
+	----------
+
+	folder : str
+		Folder name on the mail server.
+
+	move : bool
+		True if the message should be moved.
 
 
 	Returns
@@ -199,8 +210,10 @@ def process_emails():
 
 	# Open a connection to the mail server.
 	with get_email_server() as server:
-		# Ensure current folder is the inbox.
-		server.select_folder(server.INBOX)
+		if folder == '':
+			server.select_folder(server.INBOX)
+		else:
+			server.select_folder(folder)
 
 		# Loop messages in the inbox.
 		for message, uid in server.loop_messages(True):
@@ -218,7 +231,8 @@ def process_emails():
 			save_message_to_file(message, settings, values)
 
 			# Move message to another folder on the mail server.
-			move_message_to_folder(server, uid, settings, values)
+			if move:
+				move_message_to_folder(server, uid, settings, values)
 
 	return True
 
@@ -280,8 +294,30 @@ def save_message_to_file(message, settings, values):
 if '__main__' == __name__:
 	logging.basicConfig(**LOGGING_KWARGS)
 
+	parser = argparse.ArgumentParser(description='Download emails')
+
+	parser.add_argument(
+		'-f',
+		'--folder',
+		dest='folder',
+		default='',
+		help='Folder name on mail server.',
+		type=str
+	)
+
+	parser.add_argument(
+		'-m',
+		'--move',
+		dest='move',
+		default=True,
+		help='Select if messages should be moved.',
+		type=bool
+	)
+
+	args = parser.parse_args()
+
 	logger.info('Started reading emails.')
 
-	process_emails()
+	process_emails(args.folder, args.move)
 
 	logger.info('Finished reading emails.')
