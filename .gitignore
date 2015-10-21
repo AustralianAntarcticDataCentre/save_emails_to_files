@@ -1,5 +1,2 @@
 *.pyc
 *.swp
-settings.py
-settings.yaml
-python.log

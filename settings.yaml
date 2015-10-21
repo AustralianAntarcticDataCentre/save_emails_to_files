@@ -1,0 +1,58 @@
+- check:
+    from: &check_from uwyMerger@aurora.aad.gov.au
+    subject_regex:
+      - ^Data Extract:\sv\d_(?P<season>\d{6})
+      #- ^Data Extract:\sv\d_20(?P<year_2d>\d{2})
+      #- (?P<next_year_2d>\d{2})
+      - (?P<voyage_code>\d{3})
+      - (?P<year_2d>\d{2})
+      - (?P<month>\d{2})
+      - (?P<day>\d{2})
+      - (?P<hour>\d{2})
+      - (?P<minute>\d{2})
+      - \.csv
+      #- \s\[sec=unclassified\]$
+
+  move_message_to: &move_message_to >
+    INBOX/processed/{season}/{season}{voyage_code}
+
+  save_file_format: &save_file_format >
+    20{year_2d}/{month}/{day}/{hour}{minute}_AAD_{voyage_code}.csv
+
+- check:
+    from: *check_from
+    subject_regex:
+      - ^Data Extract:\sv\d_(?P<season>\d{6})
+      - (?P<voyage_code>\d{3})
+      - _20
+      - (?P<year_2d>\d{2})
+      - (?P<month>\d{2})
+      - (?P<day>\d{2})
+      - (?P<hour>\d{2})
+      - (?P<minute>\d{2})
+      - \.csv
+      #- \s\[sec=unclassified\]$
+
+  move_message_to: *move_message_to
+
+  save_file_format: *save_file_format
+
+- check:
+    from: marine@localhost.localdomain
+    subject_regex:
+      - ^Data Extract - aadc_aa20
+      - (?P<year_2d>\d{2})
+      - (?P<next_year_2d>\d{2})
+      - (?P<voyage_code>\d{3})
+      - \d{4}
+      - (?P<month>\d{2})
+      - (?P<day>\d{2})
+      - (?P<hour>\d{2})
+      - (?P<minute>\d{2})
+      - (?P<second>\d{2})
+      - \.csv
+      #- \s\[Sec=Unclassified\]$
+
+  move_message_to: *move_message_to
+
+  save_file_format: *save_file_format
