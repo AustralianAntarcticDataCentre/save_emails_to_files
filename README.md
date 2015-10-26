@@ -19,6 +19,15 @@ Once that configuration is complete, you can run the main script:
 	python download_emails.py
 
 
+## Automation
+
+### Cron job
+	
+	crontab -e
+
+	* 6 * * * source /path/to/repo/deployment/deploy.sh >> /var/log/cron.log 2>&1
+
+
 ## Helpful articles and documentation
 
 - [19.1. email - An email and MIME handling package](https://docs.python.org/3.4/library/email.html).

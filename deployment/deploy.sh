@@ -1,5 +1,7 @@
 #!/bin/sh
 
+source /home/docker-data/aadc-underway-email-processing/git/deployment/variables.sh
+
 build_images () {
 	echo -e '\n----------------------------------------------------------'
 	echo -e 'Building the aadc/underway-email-processing image'
