@@ -20,7 +20,7 @@ deploy_application () {
 	echo -e '----------------------------------------------------------'
 	docker run \
 		-v /home/docker-data/aadc-underway-email-processing/git:/srv/git \
-		-v /home/docker-data/aadc-underway-email-processing/data:/srv/data \
+		-v /home/docker-data/aadc-underway-email-processing/data:/srv/data/pending \
 		-e EMAIL_SERVER=$EMAIL_SERVER \
 		-e EMAIL_USERNAME=$EMAIL_USERNAME \
 		-e EMAIL_PASSWORD=$EMAIL_PASSWORD \
