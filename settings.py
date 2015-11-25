@@ -16,7 +16,7 @@ import yaml
 from imap import EmailAccount
 
 
-BASE_PATH = os.path.join(os.getcwd(), '..', 'data')
+BASE_PATH = os.path.join(os.getcwd(), '..', 'data', 'pending')
 BASE_PATH = os.path.normpath(BASE_PATH)
 
 SAVE_FOLDER = BASE_PATH
